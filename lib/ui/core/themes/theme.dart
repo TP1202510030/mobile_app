@@ -9,12 +9,12 @@ abstract final class AppTheme {
       fontFamily: 'InriaSans',
     ),
     bodyLarge: TextStyle(
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: FontWeight.w700,
       fontFamily: 'Roboto',
     ),
     bodyMedium: TextStyle(
-      fontSize: 16,
+      fontSize: 18,
       fontWeight: FontWeight.w400,
       fontFamily: 'Roboto',
     ),

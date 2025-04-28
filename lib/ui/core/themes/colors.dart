@@ -22,11 +22,11 @@ abstract final class AppColors {
 
   static const darkColorScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: AppColors.primary,
+    primary: AppColors.white,
     secondary: AppColors.secondary,
     surface: AppColors.primary,
     error: AppColors.red,
-    onPrimary: AppColors.white,
+    onPrimary: AppColors.primary,
     onSecondary: AppColors.white,
     onSurface: AppColors.white,
     onError: AppColors.white,
