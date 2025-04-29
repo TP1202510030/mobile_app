@@ -3,6 +3,12 @@ import 'package:mobile_app/ui/core/themes/colors.dart';
 
 abstract final class AppTheme {
   static const _textTheme = TextTheme(
+    displaySmall: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      fontFamily: 'InriaSans',
+      color: AppColors.primary,
+    ),
     headlineMedium: TextStyle(
       fontSize: 24,
       fontWeight: FontWeight.w700,
