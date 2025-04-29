@@ -7,7 +7,6 @@ abstract final class AppTheme {
       fontSize: 24,
       fontWeight: FontWeight.w700,
       fontFamily: 'InriaSans',
-      color: AppColors.primary,
     ),
     headlineMedium: TextStyle(
       fontSize: 24,

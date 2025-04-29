@@ -12,11 +12,11 @@ abstract final class AppColors {
     brightness: Brightness.light,
     primary: AppColors.primary,
     secondary: AppColors.secondary,
-    surface: AppColors.white,
+    surface: AppColors.background,
     error: AppColors.red,
     onPrimary: AppColors.white,
     onSecondary: AppColors.white,
-    onSurface: AppColors.grey,
+    onSurface: AppColors.primary,
     onError: AppColors.white,
   );
 
@@ -28,7 +28,7 @@ abstract final class AppColors {
     error: AppColors.red,
     onPrimary: AppColors.primary,
     onSecondary: AppColors.white,
-    onSurface: AppColors.white,
+    onSurface: AppColors.background,
     onError: AppColors.white,
   );
 }

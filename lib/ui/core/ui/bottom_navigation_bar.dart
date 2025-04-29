@@ -8,15 +8,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
     super.key,
     required this.items,
     this.onTap,
-    this.unselectedItemColor = AppColors.grey,
-    this.selectedItemColor = AppColors.white,
     this.currentIndex = 0,
   });
 
   final List<NavigationBarItem> items;
   final ValueChanged<int>? onTap;
-  final Color unselectedItemColor;
-  final Color selectedItemColor;
   final int currentIndex;
 
   @override
@@ -51,8 +47,11 @@ class CustomBottomNavigationBar extends StatelessWidget {
                     height: 36.0,
                     colorFilter: ColorFilter.mode(
                       index == currentIndex
-                          ? selectedItemColor
-                          : unselectedItemColor,
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withOpacity(0.4),
                       BlendMode.srcIn,
                     ),
                   ),
@@ -102,7 +101,7 @@ class RedDot extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.red,
             border: Border.all(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.onSurface,
               width: 2,
             ),
             shape: BoxShape.circle,
