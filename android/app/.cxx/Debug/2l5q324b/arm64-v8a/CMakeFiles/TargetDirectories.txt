@@ -1,2 +1,0 @@
-C:/Users/Alan/Documents/Tareas/Tesis/mobile_app/android/app/.cxx/Debug/2l5q324b/arm64-v8a/CMakeFiles/edit_cache.dir
-C:/Users/Alan/Documents/Tareas/Tesis/mobile_app/android/app/.cxx/Debug/2l5q324b/arm64-v8a/CMakeFiles/rebuild_cache.dir
