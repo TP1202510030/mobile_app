@@ -38,30 +38,39 @@ class CustomBottomNavigationBar extends StatelessWidget {
             final item = items[index];
             return InkWell(
               onTap: () => onTap?.call(index),
-              child: Stack(
-                alignment: const Alignment(1, .5),
-                children: [
-                  SvgPicture.asset(
-                    item.icon,
-                    width: 36.0,
-                    height: 36.0,
-                    colorFilter: ColorFilter.mode(
-                      index == currentIndex
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withOpacity(0.4),
-                      BlendMode.srcIn,
+              child: SizedBox(
+                width: 48.0,
+                height: 48.0,
+                child: Center(
+                  child: SizedBox(
+                    width: 32.0,
+                    height: 32.0,
+                    child: Stack(
+                      children: [
+                        SvgPicture.asset(
+                          item.icon,
+                          width: 32.0,
+                          height: 32.0,
+                          colorFilter: ColorFilter.mode(
+                            index == currentIndex
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onPrimary
+                                    .withAlpha((0.4 * 255).toInt()),
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        if (item.hasNotification)
+                          const Positioned(
+                            top: 0,
+                            right: 0,
+                            child: RedDot(),
+                          ),
+                      ],
                     ),
                   ),
-                  if (item.hasNotification)
-                    const Positioned(
-                      top: 0,
-                      right: 0,
-                      child: RedDot(),
-                    ),
-                ],
+                ),
               ),
             );
           }),
