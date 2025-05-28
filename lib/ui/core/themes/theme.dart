@@ -31,23 +31,51 @@ abstract final class AppTheme {
   );
 
   // Global style for input fields
-  static const _inputDecorationTheme = InputDecorationTheme(
-    hintStyle: TextStyle(
-      color: AppColors.grey,
-      fontSize: 16.0,
+  static final _lightInputDecorationTheme = InputDecorationTheme(
+    hintStyle: const TextStyle(
+      fontSize: 18.0,
       fontWeight: FontWeight.w400,
+      fontFamily: 'Roboto',
     ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppColors.border),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppColors.primary),
+    ),
+    filled: true,
+    fillColor: AppColors.white,
+  );
+
+  static final _darkInputDecorationTheme = InputDecorationTheme(
+    hintStyle: const TextStyle(
+      fontSize: 18.0,
+      fontWeight: FontWeight.w400,
+      fontFamily: 'Roboto',
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppColors.borderDark),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(4),
+      borderSide: const BorderSide(color: AppColors.primaryDark),
+    ),
+    filled: true,
+    fillColor: AppColors.black,
   );
 
   static ThemeData lightTheme = ThemeData(
       brightness: Brightness.light,
       colorScheme: AppColors.lightColorScheme,
       textTheme: _textTheme,
-      inputDecorationTheme: _inputDecorationTheme);
+      inputDecorationTheme: _lightInputDecorationTheme);
 
   static ThemeData darkTheme = ThemeData(
       brightness: Brightness.dark,
       colorScheme: AppColors.darkColorScheme,
       textTheme: _textTheme,
-      inputDecorationTheme: _inputDecorationTheme);
+      inputDecorationTheme: _darkInputDecorationTheme);
 }

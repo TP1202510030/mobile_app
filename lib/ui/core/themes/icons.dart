@@ -7,4 +7,5 @@ abstract final class AppIcons {
   static const String createGrowRoom = '${_basePath}createGrowRoom$_extension';
   static const String cropsArchive = '${_basePath}cropsArchive$_extension';
   static const String home = '${_basePath}home$_extension';
+  static const String search = '${_basePath}search$_extension';
 }
