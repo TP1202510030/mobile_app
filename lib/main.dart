@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Mobile App',
+      title: 'Greenhouse',
       routerConfig: router(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

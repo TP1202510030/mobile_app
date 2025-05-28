@@ -8,8 +8,8 @@ class NotificationScreen extends StatelessWidget {
     return Column(
       children: [
         Text(
-          "Notificaciones",
-          style: Theme.of(context).textTheme.displaySmall,
+          "Notifications Screen",
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
     );

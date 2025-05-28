@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/ui/core/layouts/base_layout.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
-import 'package:mobile_app/ui/archive/widgets/archive_screen.dart';
 import 'package:mobile_app/ui/notifications/widgets/notifications_screen.dart';
 
 import '../ui/home/widgets/home_screen.dart';
@@ -28,11 +28,29 @@ GoRouter router() => GoRouter(
         GoRoute(
           path: Routes.home,
           pageBuilder: (context, state) {
+            final viewModel = HomeViewModel();
+            viewModel.hasNotification =
+                true; // To be replaced with actual logic
+            viewModel.onNotificationTap = () {
+              context.push(Routes.notifications);
+            };
+
             return buildPageWithoutAnimation<void>(
               context: context,
               state: state,
               child: BaseLayout(
-                body: HomeScreen(viewModel: HomeViewModel()),
+                title: 'Bienvenido a Greenhouse',
+                actions: [
+                  InkWell(
+                    onTap: viewModel.handleNotificationTap,
+                    child: NotificationIcon(
+                      icon: AppIcons.bell,
+                      hasNotification: viewModel.hasNotification,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                body: HomeScreen(viewModel: viewModel),
               ),
             );
           },
@@ -44,19 +62,9 @@ GoRouter router() => GoRouter(
               context: context,
               state: state,
               child: const BaseLayout(
+                title: 'Notificaciones',
+                showBackButton: true,
                 body: NotificationScreen(),
-              ),
-            );
-          },
-        ),
-        GoRoute(
-          path: Routes.cropsArchive,
-          pageBuilder: (context, state) {
-            return buildPageWithoutAnimation<void>(
-              context: context,
-              state: state,
-              child: const BaseLayout(
-                body: CropsArchiveScreen(),
               ),
             );
           },
