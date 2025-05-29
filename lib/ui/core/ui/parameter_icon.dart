@@ -3,7 +3,7 @@ import 'package:flutter_svg/svg.dart';
 
 class ParameterIcon extends StatelessWidget {
   final String iconPath;
-  final String value;
+  final double value;
   final String? unitOfMeasure;
 
   const ParameterIcon({
@@ -31,10 +31,10 @@ class ParameterIcon extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 4.0),
+        const SizedBox(height: 2.0),
         Text(
-          value + (unitOfMeasure != null ? ' $unitOfMeasure' : ''),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          '$value${unitOfMeasure != null ? ' $unitOfMeasure' : ''}',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
         ),

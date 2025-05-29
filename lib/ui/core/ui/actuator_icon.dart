@@ -3,7 +3,12 @@ import 'package:flutter_svg/svg.dart';
 
 class ActuatorIcon extends StatelessWidget {
   final String iconPath;
-  const ActuatorIcon({super.key, required this.iconPath});
+  final bool isActive;
+  const ActuatorIcon({
+    super.key,
+    required this.iconPath,
+    required this.isActive,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +17,9 @@ class ActuatorIcon extends StatelessWidget {
       width: 32.0,
       height: 32.0,
       colorFilter: ColorFilter.mode(
-        Theme.of(context).colorScheme.secondary,
+        isActive
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.outline,
         BlendMode.srcIn,
       ),
     );

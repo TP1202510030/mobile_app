@@ -66,7 +66,7 @@ class _GrowRoomCardState extends State<GrowRoomCard> {
                         ...widget.actuators,
                       ],
                     ),
-                    const SizedBox(height: 8.0),
+                    const SizedBox(height: 10.0),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: widget.parameters,
