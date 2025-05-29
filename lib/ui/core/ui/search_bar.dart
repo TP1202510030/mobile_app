@@ -83,6 +83,10 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
           borderRadius: BorderRadius.circular(4),
           borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(4),
+          borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),
           borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
