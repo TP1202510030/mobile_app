@@ -16,4 +16,7 @@ abstract final class AppIcons {
       '${_basePath}soilTemperature$_extension';
   static const String extractor = '${_basePath}extractor$_extension';
   static const String recirculation = '${_basePath}recirculation$_extension';
+  static const String sensor = '${_basePath}sensor$_extension';
+  static const String actuator = '${_basePath}actuator$_extension';
+  static const String notAvailable = '${_basePath}notAvailable$_extension';
 }
