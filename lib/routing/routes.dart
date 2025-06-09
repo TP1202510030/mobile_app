@@ -3,4 +3,5 @@ abstract final class Routes {
   static const login = '/login';
   static const register = '/register';
   static const notifications = '/notifications';
+  static const crop = '/crop/:cropId';
 }

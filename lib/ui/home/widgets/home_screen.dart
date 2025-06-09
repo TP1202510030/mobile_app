@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/ui/core/themes/colors.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/horizontal_option_list.dart';
+import 'package:mobile_app/ui/home/widgets/grow_rooms_section.dart';
 import '../view_models/home_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
 
@@ -12,21 +14,40 @@ class HomeScreen extends StatelessWidget {
     required this.viewModel,
   });
 
+  List<OptionItemData> get _horizontalOptions => [
+        OptionItemData(
+          title: "Naves de cultivo",
+          onTap: () {},
+          iconPath: AppIcons.home,
+        ),
+        OptionItemData(
+          title: "Cultivos terminados",
+          onTap: () {},
+          iconPath: AppIcons.cropsArchive,
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: viewModel,
-      builder: (context, _) {
-        return Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-            child: Column(
-              children: [
-                Text("Home Screen",
-                    style: Theme.of(context).textTheme.bodyMedium)
-              ],
-            ));
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "31 de mayo del 2025",
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const SizedBox(height: 32),
+          HorizontalOptionList(options: _horizontalOptions),
+          const SizedBox(height: 32),
+          Expanded(
+            child: GrowRoomSection(viewModel: viewModel),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -85,7 +106,7 @@ class RedDot extends StatelessWidget {
           height: 12,
           width: 12,
           decoration: BoxDecoration(
-            color: AppColors.red,
+            color: AppColors.alert,
             border: Border.all(
               color: Theme.of(context).colorScheme.surface,
               width: 2,
