@@ -26,6 +26,7 @@ class _HorizontalOptionListState extends State<HorizontalOptionList> {
       height: 50,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        shrinkWrap: true,
         padding: const EdgeInsets.symmetric(horizontal: 6.0),
         itemCount: widget.options.length,
         separatorBuilder: (_, __) => const SizedBox(width: 32),
@@ -46,7 +47,7 @@ class _HorizontalOptionListState extends State<HorizontalOptionList> {
                   ),
                 ),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -79,7 +80,6 @@ class _HorizontalOptionListState extends State<HorizontalOptionList> {
   }
 }
 
-
 class OptionItemData {
   final String title;
   final String iconPath;
@@ -91,4 +91,3 @@ class OptionItemData {
     this.onTap,
   });
 }
-

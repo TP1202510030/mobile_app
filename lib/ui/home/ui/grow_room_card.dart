@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/ui/core/ui/actuator_icon.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
+import 'package:mobile_app/ui/core/ui/button.dart';
 
 class GrowRoomCard extends StatefulWidget {
   final String title;
   final String imagePath;
   final List<ParameterIcon> parameters;
-  final List<ActuatorIcon> actuators;
+  final VoidCallback? onTap;
+  final List<ActuatorIcon>? actuators;
+  final bool hasActiveCrop;
+  final VoidCallback? onStartCrop;
 
   const GrowRoomCard({
     super.key,
     required this.title,
     required this.imagePath,
     required this.parameters,
-    required this.actuators,
+    this.onTap,
+    this.actuators,
+    required this.hasActiveCrop,
+    this.onStartCrop,
   });
 
   @override
@@ -23,17 +30,19 @@ class GrowRoomCard extends StatefulWidget {
 class _GrowRoomCardState extends State<GrowRoomCard> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.onPrimary,
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(18.0)),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.outline,
-          width: 2.0,
+    return InkWell(
+      onTap: widget.hasActiveCrop ? widget.onTap : null,
+      child: Card(
+        color: Theme.of(context).colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: const BorderRadius.all(Radius.circular(18.0)),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outline,
+            width: 2.0,
+          ),
         ),
-      ),
-      elevation: 0,
-      child: Padding(
+        elevation: 0,
+        child: Padding(
           padding: const EdgeInsets.all(10.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -63,19 +72,37 @@ class _GrowRoomCardState extends State<GrowRoomCard> {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const Spacer(),
-                        ...widget.actuators,
+                        if (widget.hasActiveCrop) ...?widget.actuators,
                       ],
                     ),
                     const SizedBox(height: 10.0),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: widget.parameters,
-                    ),
+                    if (widget.hasActiveCrop)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: widget.parameters,
+                      )
+                    else
+                      CustomButton(
+                        onTap: () {
+                          widget.onStartCrop?.call();
+                        },
+                        child: Text(
+                          'Iniciar cultivo',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ],
-          )),
+          ),
+        ),
+      ),
     );
   }
 }
