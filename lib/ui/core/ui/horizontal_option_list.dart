@@ -3,21 +3,35 @@ import 'package:flutter_svg/svg.dart';
 
 class HorizontalOptionList extends StatefulWidget {
   final List<OptionItemData> options;
+  final ValueChanged<int>? onItemSelected;
+  final int initialIndex;
 
-  const HorizontalOptionList({super.key, required this.options});
+  const HorizontalOptionList({
+    super.key,
+    required this.options,
+    this.onItemSelected,
+    this.initialIndex = 0,
+  });
 
   @override
   State<HorizontalOptionList> createState() => _HorizontalOptionListState();
 }
 
 class _HorizontalOptionListState extends State<HorizontalOptionList> {
-  int selectedIndex = 0;
+  late int selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.initialIndex;
+  }
 
   void _onOptionTap(int index) {
     setState(() {
       selectedIndex = index;
     });
     widget.options[index].onTap?.call();
+    widget.onItemSelected?.call(index);
   }
 
   @override
