@@ -1,20 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/ui/core/themes/colors.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
 import '../view_models/home_viewmodel.dart';
+import 'package:flutter_svg/svg.dart';
 
 class HomeScreen extends StatelessWidget {
   final HomeViewModel viewModel;
 
-  const HomeScreen({super.key, required this.viewModel});
+  const HomeScreen({
+    super.key,
+    required this.viewModel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
+    return AnimatedBuilder(
+      animation: viewModel,
+      builder: (context, _) {
+        return Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+            child: Column(
+              children: [
+                Text("Home Screen",
+                    style: Theme.of(context).textTheme.bodyMedium)
+              ],
+            ));
+      },
+    );
+  }
+}
+
+class NotificationIcon extends StatelessWidget {
+  const NotificationIcon({
+    super.key,
+    required this.icon,
+    required this.hasNotification,
+  });
+
+  final String icon;
+  final bool hasNotification;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 32.0,
+      height: 32.0,
+      child: Stack(
+        children: [
+          SvgPicture.asset(
+            icon,
+            width: 32.0,
+            height: 32.0,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.onSurface,
+              BlendMode.srcIn,
+            ),
+          ),
+          if (hasNotification)
+            const Positioned(
+              top: 0,
+              right: 0,
+              child: RedDot(),
+            ),
+        ],
       ),
-      body: Center(
-        child: Text('Home Screen',
-            style: Theme.of(context).textTheme.headlineMedium),
+    );
+  }
+}
+
+class RedDot extends StatelessWidget {
+  const RedDot({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 16,
+      width: 16,
+      child: Align(
+        alignment: Alignment.center,
+        child: Container(
+          height: 12,
+          width: 12,
+          decoration: BoxDecoration(
+            color: AppColors.red,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.surface,
+              width: 2,
+            ),
+            shape: BoxShape.circle,
+          ),
+        ),
       ),
     );
   }
