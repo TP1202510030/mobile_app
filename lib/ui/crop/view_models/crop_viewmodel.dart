@@ -7,17 +7,19 @@ class CropViewModel extends ChangeNotifier {
   final MeasurementService _measurementService;
   int _selectedSectionIndex = 0;
 
-  List<Measurement> _latestMeasurements = [];
+  Map<String, List<Measurement>> _measurementsByParameter = {};
+
   bool _isLoadingMeasurements = false;
   String? _measurementError;
 
-  List<Measurement> get latestMeasurements => _latestMeasurements;
+  Map<String, List<Measurement>> get measurementsByParameter =>
+      _measurementsByParameter;
   bool get isLoadingMeasurements => _isLoadingMeasurements;
   String? get measurementError => _measurementError;
   int get selectedSectionIndex => _selectedSectionIndex;
 
   CropViewModel(this.cropId, this._measurementService) {
-    _loadLatestMeasurements();
+    _loadMeasurements();
   }
 
   void selectSection(int index) {
@@ -27,16 +29,22 @@ class CropViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadLatestMeasurements() async {
+  Future<void> _loadMeasurements() async {
     _isLoadingMeasurements = true;
     _measurementError = null;
     notifyListeners();
 
     try {
+
+      final startTime = DateTime.now();
       final measurements = await _measurementService
           .fetchMeasurementsForCurrentPhaseByGrowRoomId(cropId);
+      final endTime = DateTime.now();
+      final duration = endTime.difference(startTime).inMilliseconds;
+      debugPrint('Tiempo de la llamada a la API: $duration ms');
+  
 
-      _latestMeasurements = _groupAndGetLatestMeasurements(measurements);
+      _measurementsByParameter = _groupMeasurementsByParameter(measurements);
     } catch (e) {
       _measurementError = 'Failed to load measurements: $e';
       debugPrint('Error loading measurements: $e');
@@ -46,20 +54,22 @@ class CropViewModel extends ChangeNotifier {
     }
   }
 
-  List<Measurement> _groupAndGetLatestMeasurements(
+  Map<String, List<Measurement>> _groupMeasurementsByParameter(
       List<Measurement> measurements) {
-    final Map<String, Measurement> latestByParameter = {};
+    final Map<String, List<Measurement>> groupedData = {};
     for (var measurement in measurements) {
-      if (!latestByParameter.containsKey(measurement.parameter) ||
-          measurement.timestamp
-              .isAfter(latestByParameter[measurement.parameter]!.timestamp)) {
-        latestByParameter[measurement.parameter] = measurement;
+      if (!groupedData.containsKey(measurement.parameter)) {
+        groupedData[measurement.parameter] = [];
       }
+      groupedData[measurement.parameter]!.add(measurement);
     }
-    return latestByParameter.values.toList();
+    groupedData.forEach((key, value) {
+      value.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    });
+    return groupedData;
   }
 
   Future<void> refreshMeasurements() async {
-    await _loadLatestMeasurements();
+    await _loadMeasurements();
   }
 }

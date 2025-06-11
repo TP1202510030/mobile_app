@@ -3,20 +3,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/colors.dart';
 
-class PanelItem {
-  final String iconPath;
-  final String title;
-  final Widget body;
-  bool isExpanded;
-
-  PanelItem({
-    required this.iconPath,
-    required this.title,
-    required this.body,
-    this.isExpanded = false,
-  });
-}
-
 class CustomExpansionPanelList extends StatefulWidget {
   final List<PanelItem> items;
   final Duration animationDuration;
@@ -50,11 +36,6 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList>
   Widget _buildPanel(PanelItem item) {
     return Container(
       margin: EdgeInsets.symmetric(vertical: AppSizes.blockSizeVertical * 1),
-      decoration: BoxDecoration(
-        color: widget.headerBackground,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
       child: Column(
         children: [
           InkWell(
@@ -70,7 +51,16 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList>
               ),
               child: Row(
                 children: [
-                  // Icono SVG
+                  AnimatedRotation(
+                    turns: item.isExpanded ? 0.5 : 0.0,
+                    duration: widget.animationDuration,
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: widget.headerTextColor,
+                      size: AppSizes.blockSizeHorizontal * 6,
+                    ),
+                  ),
+                  SizedBox(width: AppSizes.blockSizeHorizontal * 2),
                   SvgPicture.asset(
                     item.iconPath,
                     width: AppSizes.blockSizeHorizontal * 6,
@@ -84,15 +74,6 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList>
                           .textTheme
                           .bodyLarge!
                           .copyWith(color: widget.headerTextColor),
-                    ),
-                  ),
-                  AnimatedRotation(
-                    turns: item.isExpanded ? 0.5 : 0.0,
-                    duration: widget.animationDuration,
-                    child: Icon(
-                      Icons.keyboard_arrow_down,
-                      color: widget.headerTextColor,
-                      size: AppSizes.blockSizeHorizontal * 6,
                     ),
                   ),
                 ],
@@ -117,4 +98,18 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList>
       ),
     );
   }
+}
+
+class PanelItem {
+  final String iconPath;
+  final String title;
+  final Widget body;
+  bool isExpanded;
+
+  PanelItem({
+    required this.iconPath,
+    required this.title,
+    required this.body,
+    this.isExpanded = false,
+  });
 }

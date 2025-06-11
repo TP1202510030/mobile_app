@@ -55,22 +55,13 @@ class GrowRoomSection extends StatelessWidget {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (_, index) {
                   final room = rooms[index];
-                  final params = room.latestMeasurements.isEmpty
-                      ? [
-                          const ParameterIcon(
-                            iconPath: AppIcons.notAvailable,
-                            value: 0,
-                            unitOfMeasure: 'N/A',
-                          )
-                        ]
-                      : room.latestMeasurements.map((m) {
-                          return ParameterIcon(
-                            iconPath:
-                                IconUtils.getIconForParameter(m.parameter),
-                            value: m.value,
-                            unitOfMeasure: m.unitOfMeasurement,
-                          );
-                        }).toList();
+                  final params = room.latestMeasurements.map((m) {
+                    return ParameterIcon(
+                      iconPath: IconUtils.getIconForParameter(m.parameter),
+                      value: m.value,
+                      unitOfMeasure: m.unitOfMeasurement,
+                    );
+                  }).toList();
 
                   return GrowRoomCard(
                     title: room.name,
