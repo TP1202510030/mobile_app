@@ -77,10 +77,22 @@ class _GrowRoomCardState extends State<GrowRoomCard> {
                     ),
                     const SizedBox(height: 10.0),
                     if (widget.hasActiveCrop)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: widget.parameters,
-                      )
+                      if (widget.parameters.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: widget.parameters,
+                        )
+                      else
+                        Text(
+                          'Aún no hay mediciones disponibles.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface),
+                        )
                     else
                       CustomButton(
                         onTap: () {
