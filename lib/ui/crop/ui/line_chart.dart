@@ -39,6 +39,7 @@ class LineChart extends StatelessWidget {
     List<Measurement> chartMeasurements = [];
     if (measurements.length == 1) {
       final singleMeasurement = measurements.first;
+
       chartMeasurements.add(Measurement(
         id: -1,
         parameter: singleMeasurement.parameter,
@@ -66,7 +67,7 @@ class LineChart extends StatelessWidget {
       child: SizedBox(
         height: 160,
         child: Padding(
-          padding: EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(16.0),
           child: SfCartesianChart(
             primaryXAxis: DateTimeAxis(
               intervalType: DateTimeIntervalType.hours,
@@ -84,7 +85,7 @@ class LineChart extends StatelessWidget {
                 name: parameterName,
                 color: Theme.of(context).colorScheme.primary,
                 markerSettings: const MarkerSettings(isVisible: true),
-                dataLabelSettings: const DataLabelSettings(isVisible: false),
+                dataLabelSettings: const DataLabelSettings(isVisible: true),
               ),
             ],
           ),
