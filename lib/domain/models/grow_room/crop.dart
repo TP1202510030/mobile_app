@@ -1,5 +1,51 @@
 import 'package:mobile_app/domain/models/grow_room/measurement.dart';
 
+// Helper function to parse ISO 8601 duration strings (e.g., "PT2H30M")
+Duration _parseIso8601Duration(String isoString) {
+  // Handles cases like "P30D" which don't have a "T"
+  if (!isoString.contains('T') &&
+      isoString.startsWith('P') &&
+      isoString.endsWith('D')) {
+    final days = int.tryParse(isoString.substring(1, isoString.length - 1));
+    return Duration(days: days ?? 0);
+  }
+
+  if (!isoString.startsWith('PT')) {
+    // Allows for durations that only contain days e.g P30D
+    if (isoString.startsWith('P') && !isoString.contains('T')) {
+      return Duration(
+          days: int.tryParse(isoString.replaceAll(RegExp(r'[PD]'), '')) ?? 0);
+    }
+    throw FormatException("Invalid ISO 8601 duration format", isoString);
+  }
+  try {
+    int hours = 0;
+    int minutes = 0;
+    int seconds = 0;
+
+    String durationPart = isoString.substring(2); // Remove "PT"
+
+    final hoursMatch = RegExp(r'(\d+)H').firstMatch(durationPart);
+    if (hoursMatch != null) {
+      hours = int.parse(hoursMatch.group(1)!);
+    }
+
+    final minutesMatch = RegExp(r'(\d+)M').firstMatch(durationPart);
+    if (minutesMatch != null) {
+      minutes = int.parse(minutesMatch.group(1)!);
+    }
+
+    final secondsMatch = RegExp(r'(\d+)S').firstMatch(durationPart);
+    if (secondsMatch != null) {
+      seconds = int.parse(secondsMatch.group(1)!);
+    }
+
+    return Duration(hours: hours, minutes: minutes, seconds: seconds);
+  } catch (e) {
+    throw FormatException("Error parsing ISO 8601 duration", isoString);
+  }
+}
+
 class Crop {
   final int id;
   final DateTime startDate;
@@ -20,17 +66,24 @@ class Crop {
   });
 
   factory Crop.fromJson(Map<String, dynamic> json) {
+    // Null-safe check for the 'phases' list. Defaults to an empty list if null.
+    final phasesList = json['phases'] as List<dynamic>? ?? [];
+
     return Crop(
       id: json['id'],
-      startDate: json['startDate'],
-      endDate: json['endDate'],
-      sensorActivationFrequency: json['sensorActivationFrequency'],
+      startDate: DateTime.parse(json['startDate'] as String),
+      endDate: json['endDate'] != null
+          ? DateTime.parse(json['endDate'] as String)
+          : null,
+      sensorActivationFrequency:
+          _parseIso8601Duration(json['sensorActivationFrequency'] as String),
       growRoomId: json['growRoomId'],
       currentPhase: json['currentPhase'] != null
-          ? CropPhase.fromJson(json['currentPhase'])
+          ? CropPhase.fromJson(json['currentPhase'] as Map<String, dynamic>)
           : null,
-      phases:
-          (json['phases'] as List).map((p) => CropPhase.fromJson(p)).toList(),
+      phases: phasesList
+          .map((p) => CropPhase.fromJson(p as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -51,13 +104,17 @@ class CropPhase {
   });
 
   factory CropPhase.fromJson(Map<String, dynamic> json) {
+    // Null-safe check for the 'measurements' list. Defaults to an empty list if null.
+    final measurementsList = json['measurements'] as List<dynamic>? ?? [];
+
     return CropPhase(
       id: json['id'],
       name: json['name'],
-      duration: Duration(seconds: json['duration']),
-      thresholds: ParameterThresholds.fromJson(json['thresholds']),
-      measurements: (json['measurements'] as List)
-          .map((m) => Measurement.fromJson(m))
+      duration: _parseIso8601Duration(json['duration'] as String),
+      thresholds: ParameterThresholds.fromJson(
+          json['thresholds'] as Map<String, dynamic>),
+      measurements: measurementsList
+          .map((m) => Measurement.fromJson(m as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -68,6 +125,8 @@ class ParameterThresholds {
   final double airTemperatureMax;
   final double airHumidityMin;
   final double airHumidityMax;
+  final double carbonDioxideMin;
+  final double carbonDioxideMax;
   final double soilTemperatureMin;
   final double soilTemperatureMax;
   final double soilMoistureMin;
@@ -78,6 +137,8 @@ class ParameterThresholds {
     required this.airTemperatureMax,
     required this.airHumidityMin,
     required this.airHumidityMax,
+    required this.carbonDioxideMin,
+    required this.carbonDioxideMax,
     required this.soilTemperatureMin,
     required this.soilTemperatureMax,
     required this.soilMoistureMin,
@@ -86,14 +147,16 @@ class ParameterThresholds {
 
   factory ParameterThresholds.fromJson(Map<String, dynamic> json) {
     return ParameterThresholds(
-      airTemperatureMin: json['airTemperatureMin'],
-      airTemperatureMax: json['airTemperatureMax'],
-      airHumidityMin: json['airHumidityMin'],
-      airHumidityMax: json['airHumidityMax'],
-      soilTemperatureMin: json['soilTemperatureMin'],
-      soilTemperatureMax: json['soilTemperatureMax'],
-      soilMoistureMin: json['soilMoistureMin'],
-      soilMoistureMax: json['soilMoistureMax'],
+      airTemperatureMin: (json['airTemperatureMin'] as num).toDouble(),
+      airTemperatureMax: (json['airTemperatureMax'] as num).toDouble(),
+      airHumidityMin: (json['airHumidityMin'] as num).toDouble(),
+      airHumidityMax: (json['airHumidityMax'] as num).toDouble(),
+      carbonDioxideMin: (json['carbonDioxideMin'] as num).toDouble(),
+      carbonDioxideMax: (json['carbonDioxideMax'] as num).toDouble(),
+      soilTemperatureMin: (json['soilTemperatureMin'] as num).toDouble(),
+      soilTemperatureMax: (json['soilTemperatureMax'] as num).toDouble(),
+      soilMoistureMin: (json['soilMoistureMin'] as num).toDouble(),
+      soilMoistureMax: (json['soilMoistureMax'] as num).toDouble(),
     );
   }
 }

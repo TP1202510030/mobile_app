@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/domain/models/grow_room/parameter.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
 import 'package:mobile_app/ui/crop/ui/line_chart.dart';
@@ -43,7 +44,7 @@ class SensorsSection extends StatelessWidget {
 
         final List<PanelItem> chartPanels =
             viewModel.measurementsByParameter.entries.map((entry) {
-          final parameterName = entry.key;
+          final parameter = entry.key;
           final measurementsForParameter = entry.value;
 
           final unitOfMeasurement = measurementsForParameter.isNotEmpty
@@ -51,12 +52,10 @@ class SensorsSection extends StatelessWidget {
               : '';
 
           return PanelItem(
-            iconPath: IconUtils.getIconForParameter(
-                parameterName), // Usa IconUtils para el icono
-            title:
-                parameterName, // El nombre del parámetro como título del panel
+            iconPath: parameter.iconPath,
+            title: parameter.label,
             body: LineChart(
-              parameterName: parameterName,
+              parameterName: parameter.label,
               unitOfMeasurement: unitOfMeasurement,
               measurements: measurementsForParameter,
             ),
@@ -76,9 +75,11 @@ class SensorsSection extends StatelessWidget {
                   children: viewModel.measurementsByParameter.values
                       .map((measurementsList) {
                     final latestMeasurement = measurementsList.last;
+                    // ✅ CAMBIO: Convierte la clave String al enum antes de usar.
+                    final parameterEnum =
+                        ParameterInfo.fromKey(latestMeasurement.parameter);
                     return ParameterIcon(
-                      iconPath: IconUtils.getIconForParameter(
-                          latestMeasurement.parameter),
+                      iconPath: parameterEnum.iconPath,
                       value: latestMeasurement.value,
                       unitOfMeasure: latestMeasurement.unitOfMeasurement,
                     );

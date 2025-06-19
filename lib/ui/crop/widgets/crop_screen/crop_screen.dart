@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/horizontal_option_list.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
-import 'package:mobile_app/ui/crop/widgets/sensors_section.dart';
-import 'package:mobile_app/ui/crop/widgets/actuators_section.dart';
+import 'package:mobile_app/ui/crop/widgets/crop_screen/sensors_section.dart';
+import 'package:mobile_app/ui/crop/widgets/crop_screen/actuators_section.dart';
 
 class CropScreen extends StatelessWidget {
   final CropViewModel viewModel;

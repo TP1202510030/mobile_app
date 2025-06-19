@@ -18,7 +18,7 @@ class CustomExpansionPanelList extends StatefulWidget {
   });
 
   @override
-  _CustomExpansionPanelListState createState() =>
+  State<CustomExpansionPanelList> createState() =>
       _CustomExpansionPanelListState();
 }
 
