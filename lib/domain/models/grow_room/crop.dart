@@ -147,16 +147,24 @@ class ParameterThresholds {
 
   factory ParameterThresholds.fromJson(Map<String, dynamic> json) {
     return ParameterThresholds(
-      airTemperatureMin: (json['airTemperatureMin'] as num).toDouble(),
-      airTemperatureMax: (json['airTemperatureMax'] as num).toDouble(),
-      airHumidityMin: (json['airHumidityMin'] as num).toDouble(),
-      airHumidityMax: (json['airHumidityMax'] as num).toDouble(),
-      carbonDioxideMin: (json['carbonDioxideMin'] as num).toDouble(),
-      carbonDioxideMax: (json['carbonDioxideMax'] as num).toDouble(),
-      soilTemperatureMin: (json['soilTemperatureMin'] as num).toDouble(),
-      soilTemperatureMax: (json['soilTemperatureMax'] as num).toDouble(),
-      soilMoistureMin: (json['soilMoistureMin'] as num).toDouble(),
-      soilMoistureMax: (json['soilMoistureMax'] as num).toDouble(),
+      // ✅ INICIO DE LA CORRECCIÓN:
+      // Se reemplaza `(json['key'] as num).toDouble()` por una versión segura.
+      // `(json['key'] as num?)` -> Convierte a un número nulable sin fallar.
+      // `?.toDouble()` -> Llama a toDouble() solo si no es nulo.
+      // `?? 0.0` -> Si el resultado es nulo, usa 0.0 como valor por defecto.
+      airTemperatureMin: (json['airTemperatureMin'] as num?)?.toDouble() ?? 0.0,
+      airTemperatureMax: (json['airTemperatureMax'] as num?)?.toDouble() ?? 0.0,
+      airHumidityMin: (json['airHumidityMin'] as num?)?.toDouble() ?? 0.0,
+      airHumidityMax: (json['airHumidityMax'] as num?)?.toDouble() ?? 0.0,
+      carbonDioxideMin: (json['carbonDioxideMin'] as num?)?.toDouble() ?? 0.0,
+      carbonDioxideMax: (json['carbonDioxideMax'] as num?)?.toDouble() ?? 0.0,
+      soilTemperatureMin:
+          (json['soilTemperatureMin'] as num?)?.toDouble() ?? 0.0,
+      soilTemperatureMax:
+          (json['soilTemperatureMax'] as num?)?.toDouble() ?? 0.0,
+      soilMoistureMin: (json['soilMoistureMin'] as num?)?.toDouble() ?? 0.0,
+      soilMoistureMax: (json['soilMoistureMax'] as num?)?.toDouble() ?? 0.0,
+      // ✅ FIN DE LA CORRECCIÓN
     );
   }
 }

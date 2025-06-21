@@ -3,9 +3,12 @@ import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 
 class BaseLayout extends StatefulWidget {
   final Widget body;
-  final String? title;
+  // ✅ CAMBIO: El título ahora puede ser cualquier Widget.
+  final Widget? title;
   final bool showBackButton;
   final List<Widget>? actions;
+  // ✅ AÑADIDO: Permite un widget personalizado para el botón de "atrás".
+  final Widget? leading;
 
   const BaseLayout({
     super.key,
@@ -13,6 +16,7 @@ class BaseLayout extends StatefulWidget {
     this.title,
     this.showBackButton = true,
     this.actions,
+    this.leading,
   });
 
   @override
@@ -26,13 +30,10 @@ class _BaseLayoutState extends State<BaseLayout> {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: widget.showBackButton,
-        title: widget.title != null
-            ? Text(
-                widget.title!,
-                style: Theme.of(context).textTheme.displaySmall,
-              )
-            : null,
+        leading: widget.leading,
+        automaticallyImplyLeading:
+            widget.leading == null && widget.showBackButton,
+        title: widget.title,
         actions: widget.actions,
       ),
       body: SafeArea(

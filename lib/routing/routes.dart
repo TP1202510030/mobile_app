@@ -4,4 +4,5 @@ abstract final class Routes {
   static const register = '/register';
   static const notifications = '/notifications';
   static const crop = '/crop/:cropId';
+  static const createCrop = '/stepper/:growRoomId';
 }

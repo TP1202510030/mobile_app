@@ -28,7 +28,7 @@ class CropScreen extends StatelessWidget {
       case 0:
         return SensorsSection(viewModel: viewModel);
       case 1:
-        return const ActuatorsSection();
+        return ActuatorsSection(viewModel: viewModel);
       default:
         return const SizedBox.shrink();
     }
