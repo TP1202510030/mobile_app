@@ -4,24 +4,37 @@ import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
 import 'package:mobile_app/ui/crop/ui/line_chart.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
-class SensorsSection extends StatelessWidget {
+class SensorsSection extends StatefulWidget {
   final CropViewModel viewModel;
 
   const SensorsSection({super.key, required this.viewModel});
 
   @override
+  State<SensorsSection> createState() => _SensorsSectionState();
+}
+
+class _SensorsSectionState extends State<SensorsSection> {
+  Map<Parameter, TooltipBehavior> _tooltipBehaviors = {};
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: viewModel,
+      listenable: widget.viewModel,
       builder: (context, child) {
-        if (viewModel.isLoadingMeasurements) {
+        if (widget.viewModel.isLoadingMeasurements) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (viewModel.measurementError != null) {
+        if (widget.viewModel.measurementError != null) {
           return Center(
             child: Text(
-              'Error: ${viewModel.measurementError}',
+              'Error: ${widget.viewModel.measurementError}',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -31,7 +44,7 @@ class SensorsSection extends StatelessWidget {
           );
         }
 
-        if (viewModel.measurementsByParameter.isEmpty) {
+        if (widget.viewModel.measurementsByParameter.isEmpty) {
           return Center(
             child: Text(
               'No hay mediciones disponibles para esta fase.',
@@ -41,8 +54,13 @@ class SensorsSection extends StatelessWidget {
           );
         }
 
+        for (var param in widget.viewModel.measurementsByParameter.keys) {
+          _tooltipBehaviors.putIfAbsent(
+              param, () => TooltipBehavior(enable: true));
+        }
+
         final List<PanelItem> chartPanels =
-            viewModel.measurementsByParameter.entries.map((entry) {
+            widget.viewModel.measurementsByParameter.entries.map((entry) {
           final parameter = entry.key;
           final measurementsForParameter = entry.value;
 
@@ -50,13 +68,17 @@ class SensorsSection extends StatelessWidget {
               ? measurementsForParameter.first.unitOfMeasurement
               : '';
 
+          final tooltipBehavior = _tooltipBehaviors[parameter]!;
+
           return PanelItem(
             iconPath: parameter.iconPath,
             title: parameter.label,
+            tooltipBehavior: tooltipBehavior,
             body: LineChart(
               parameterName: parameter.label,
               unitOfMeasurement: unitOfMeasurement,
               measurements: measurementsForParameter,
+              tooltipBehavior: tooltipBehavior,
             ),
           );
         }).toList();
@@ -71,10 +93,10 @@ class SensorsSection extends StatelessWidget {
                   spacing: 24.0,
                   runSpacing: 16.0,
                   alignment: WrapAlignment.spaceBetween,
-                  children: viewModel.measurementsByParameter.values
+                  children: widget.viewModel.measurementsByParameter.values
                       .map((measurementsList) {
                     final latestMeasurement = measurementsList.last;
-                    // ✅ CAMBIO: Convierte la clave String al enum antes de usar.
+
                     final parameterEnum =
                         ParameterInfo.fromKey(latestMeasurement.parameter);
                     return ParameterIcon(

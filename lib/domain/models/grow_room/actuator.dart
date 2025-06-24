@@ -6,7 +6,6 @@ enum Actuator {
 }
 
 extension ActuatorInfo on Actuator {
-  /// La clave usada en el backend.
   String get key {
     switch (this) {
       case Actuator.airExtractor:
@@ -16,7 +15,6 @@ extension ActuatorInfo on Actuator {
     }
   }
 
-  /// La etiqueta para la UI.
   String get label {
     switch (this) {
       case Actuator.airExtractor:
@@ -26,7 +24,6 @@ extension ActuatorInfo on Actuator {
     }
   }
 
-  /// La ruta del icono SVG.
   String get iconPath {
     switch (this) {
       case Actuator.airExtractor:
@@ -36,7 +33,6 @@ extension ActuatorInfo on Actuator {
     }
   }
 
-  /// Convierte una clave String de vuelta al enum.
   static Actuator fromKey(String key) {
     return Actuator.values.firstWhere(
       (a) => a.key == key,

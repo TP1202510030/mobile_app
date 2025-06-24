@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/actuator.dart';
+import 'package:mobile_app/domain/models/grow_room/actuator.dart';
 
 import 'package:mobile_app/domain/models/grow_room/control_action.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
@@ -174,7 +174,8 @@ class _HistorySection extends StatelessWidget {
                     title: Text(_buildHistoryDescription(action),
                         style: Theme.of(context).textTheme.bodyMedium),
                     trailing: Text(
-                      DateFormat('h:mm a', 'es_ES').format(action.timestamp),
+                      DateFormat('h:mm a', 'es_ES')
+                          .format(action.timestamp.toLocal()),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   );

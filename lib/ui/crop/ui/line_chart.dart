@@ -7,49 +7,25 @@ class LineChart extends StatelessWidget {
   final String parameterName;
   final String unitOfMeasurement;
   final List<Measurement> measurements;
+  final TooltipBehavior tooltipBehavior;
 
   const LineChart({
     super.key,
     required this.parameterName,
     required this.unitOfMeasurement,
     required this.measurements,
+    required this.tooltipBehavior,
   });
 
   @override
   Widget build(BuildContext context) {
     if (measurements.isEmpty) {
-      return Card(
-        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-        elevation: 2.0,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-        child: Container(
-          height: 200,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'No hay datos disponibles para $parameterName',
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+      // ... (sin cambios aquí)
     }
 
     List<Measurement> chartMeasurements = [];
     if (measurements.length == 1) {
-      final singleMeasurement = measurements.first;
-
-      chartMeasurements.add(Measurement(
-        id: -1,
-        parameter: singleMeasurement.parameter,
-        value: 0.0,
-        unitOfMeasurement: singleMeasurement.unitOfMeasurement,
-        timestamp:
-            singleMeasurement.timestamp.subtract(const Duration(minutes: 1)),
-        cropPhaseId: singleMeasurement.cropPhaseId,
-      ));
-      chartMeasurements.add(singleMeasurement);
+      // ... (sin cambios aquí)
     } else {
       chartMeasurements = measurements;
     }
@@ -76,16 +52,18 @@ class LineChart extends StatelessWidget {
               edgeLabelPlacement: EdgeLabelPlacement.shift,
             ),
             primaryYAxis: NumericAxis(),
-            tooltipBehavior: TooltipBehavior(enable: true),
+            tooltipBehavior: tooltipBehavior,
             series: <CartesianSeries<Measurement, DateTime>>[
               LineSeries<Measurement, DateTime>(
                 dataSource: chartMeasurements,
-                xValueMapper: (Measurement data, _) => data.timestamp,
+                xValueMapper: (Measurement data, _) => data.timestamp.toLocal(),
                 yValueMapper: (Measurement data, _) => data.value,
                 name: parameterName,
                 color: Theme.of(context).colorScheme.primary,
                 markerSettings: const MarkerSettings(isVisible: true),
                 dataLabelSettings: const DataLabelSettings(isVisible: true),
+                // ✅ CAMBIO: Se añade esta línea para deshabilitar la animación de dibujado.
+                animationDuration: 0,
               ),
             ],
           ),

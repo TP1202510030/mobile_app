@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 
 class ParameterIcon extends StatelessWidget {
   final String iconPath;
@@ -15,6 +16,8 @@ class ParameterIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final formattedValue = NumberFormat('#,##0.##', 'es_ES').format(value);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -33,7 +36,7 @@ class ParameterIcon extends StatelessWidget {
         ),
         const SizedBox(height: 2.0),
         Text(
-          '$value${unitOfMeasure != null ? ' $unitOfMeasure' : ''}',
+          '$formattedValue${unitOfMeasure != null ? ' $unitOfMeasure' : ''}',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),

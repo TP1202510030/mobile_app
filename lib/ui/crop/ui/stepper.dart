@@ -29,7 +29,8 @@ class _CustomStepperState extends State<CustomStepper> {
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: ListenableBuilder(
                 listenable: Listenable.merge(
-                    [step.isActiveNotifier, step.isCompletedNotifier]),
+                  [step.isActiveNotifier, step.isCompletedNotifier],
+                ),
                 builder: (context, child) {
                   Color targetColor = step.isCompleted
                       ? AppColors.accent

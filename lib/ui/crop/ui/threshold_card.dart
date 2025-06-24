@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/models/grow_room/parameter.dart';
-import 'package:mobile_app/ui/crop/ui/parameter_threshold_input';
+import 'package:mobile_app/ui/crop/ui/parameter_threshold_input.dart';
 import 'package:mobile_app/ui/crop/view_models/create_crop_viewmodel.dart';
 
 class ThresholdCard extends StatelessWidget {

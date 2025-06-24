@@ -12,6 +12,8 @@ import 'package:mobile_app/ui/crop/view_models/create_crop_viewmodel.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
 import 'package:mobile_app/ui/crop/widgets/create_crop_screen/create_crop_screen.dart';
 import 'package:mobile_app/ui/crop/widgets/crop_screen/crop_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crops_screen.dart';
+import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 import 'package:mobile_app/ui/notifications/widgets/notifications_screen.dart';
 import 'package:mobile_app/ui/home/widgets/home_screen.dart';
@@ -38,7 +40,7 @@ GoRouter router() => GoRouter(
           path: Routes.home,
           pageBuilder: (context, state) {
             final viewModel = HomeViewModel(
-                GrowRoomService(baseUrl: 'http://backend.integradis.shop'));
+                GrowRoomService(baseUrl: 'http://localhost:3000'));
             viewModel.hasNotification =
                 true; // To be replaced with actual logic
             viewModel.onNotificationTap = () {
@@ -93,9 +95,9 @@ GoRouter router() => GoRouter(
             final cropId = int.parse(cropIdString);
 
             final measurementService =
-                MeasurementService(baseUrl: 'http://backend.integradis.shop');
+                MeasurementService(baseUrl: 'http://localhost:3000');
             final controlActionService =
-                ControlActionService(baseUrl: 'http://backend.integradis.shop');
+                ControlActionService(baseUrl: 'http://localhost:3000');
 
             final viewModel =
                 CropViewModel(cropId, measurementService, controlActionService);
@@ -119,8 +121,7 @@ GoRouter router() => GoRouter(
             final growRoomIdString = state.pathParameters['growRoomId']!;
             final growRoomId = int.parse(growRoomIdString);
 
-            final cropService =
-                CropService(baseUrl: 'http://backend.integradis.shop');
+            final cropService = CropService(baseUrl: 'http://localhost:3000');
             final viewModel = CreateCropViewModel(growRoomId, cropService);
 
             return buildPageWithoutAnimation<void>(
@@ -151,6 +152,32 @@ GoRouter router() => GoRouter(
                   ),
                   body: CreateCropScreen(viewModel: viewModel),
                 ),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: Routes.finishedCrops,
+          pageBuilder: (context, state) {
+            final growRoomId = int.parse(state.pathParameters['growRoomId']!);
+
+            final viewModel = FinishedCropsViewModel(
+              growRoomId: growRoomId,
+              cropService: CropService(baseUrl: 'http://localhost:3000'),
+              growRoomService:
+                  GrowRoomService(baseUrl: 'http://localhost:3000'),
+            );
+
+            return buildPageWithoutAnimation<void>(
+              context: context,
+              state: state,
+              child: BaseLayout(
+                title: Text(
+                  'Cultivos Finalizados',
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
+                showBackButton: true,
+                body: FinishedCropsScreen(viewModel: viewModel),
               ),
             );
           },

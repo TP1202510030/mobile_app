@@ -33,7 +33,19 @@ class CropService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as List<dynamic>;
+      return data
+          .map((crop) => Crop.fromJson(crop as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to load crops');
+    }
+  }
 
+  Future<List<Crop>> getCropsByGrowRoomId(int growRoomId) async {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/v1/crops?growRoomId=$growRoomId'));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as List<dynamic>;
       return data
           .map((crop) => Crop.fromJson(crop as Map<String, dynamic>))
           .toList();

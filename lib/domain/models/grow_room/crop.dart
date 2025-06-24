@@ -1,8 +1,6 @@
 import 'package:mobile_app/domain/models/grow_room/measurement.dart';
 
-// Helper function to parse ISO 8601 duration strings (e.g., "PT2H30M")
 Duration _parseIso8601Duration(String isoString) {
-  // Handles cases like "P30D" which don't have a "T"
   if (!isoString.contains('T') &&
       isoString.startsWith('P') &&
       isoString.endsWith('D')) {
@@ -11,7 +9,6 @@ Duration _parseIso8601Duration(String isoString) {
   }
 
   if (!isoString.startsWith('PT')) {
-    // Allows for durations that only contain days e.g P30D
     if (isoString.startsWith('P') && !isoString.contains('T')) {
       return Duration(
           days: int.tryParse(isoString.replaceAll(RegExp(r'[PD]'), '')) ?? 0);
@@ -23,7 +20,7 @@ Duration _parseIso8601Duration(String isoString) {
     int minutes = 0;
     int seconds = 0;
 
-    String durationPart = isoString.substring(2); // Remove "PT"
+    String durationPart = isoString.substring(2);
 
     final hoursMatch = RegExp(r'(\d+)H').firstMatch(durationPart);
     if (hoursMatch != null) {
@@ -66,7 +63,6 @@ class Crop {
   });
 
   factory Crop.fromJson(Map<String, dynamic> json) {
-    // Null-safe check for the 'phases' list. Defaults to an empty list if null.
     final phasesList = json['phases'] as List<dynamic>? ?? [];
 
     return Crop(
@@ -81,7 +77,9 @@ class Crop {
       currentPhase: json['currentPhase'] != null
           ? CropPhase.fromJson(json['currentPhase'] as Map<String, dynamic>)
           : null,
+      // FIX: Se añade un filtro para evitar errores si algún elemento de la lista es nulo.
       phases: phasesList
+          .where((p) => p != null)
           .map((p) => CropPhase.fromJson(p as Map<String, dynamic>))
           .toList(),
     );
@@ -104,16 +102,17 @@ class CropPhase {
   });
 
   factory CropPhase.fromJson(Map<String, dynamic> json) {
-    // Null-safe check for the 'measurements' list. Defaults to an empty list if null.
     final measurementsList = json['measurements'] as List<dynamic>? ?? [];
+
+    final thresholdsData = json['thresholds'] as Map<String, dynamic>? ?? {};
 
     return CropPhase(
       id: json['id'],
       name: json['name'],
       duration: _parseIso8601Duration(json['duration'] as String),
-      thresholds: ParameterThresholds.fromJson(
-          json['thresholds'] as Map<String, dynamic>),
+      thresholds: ParameterThresholds.fromJson(thresholdsData),
       measurements: measurementsList
+          .where((m) => m != null)
           .map((m) => Measurement.fromJson(m as Map<String, dynamic>))
           .toList(),
     );
@@ -147,11 +146,6 @@ class ParameterThresholds {
 
   factory ParameterThresholds.fromJson(Map<String, dynamic> json) {
     return ParameterThresholds(
-      // ✅ INICIO DE LA CORRECCIÓN:
-      // Se reemplaza `(json['key'] as num).toDouble()` por una versión segura.
-      // `(json['key'] as num?)` -> Convierte a un número nulable sin fallar.
-      // `?.toDouble()` -> Llama a toDouble() solo si no es nulo.
-      // `?? 0.0` -> Si el resultado es nulo, usa 0.0 como valor por defecto.
       airTemperatureMin: (json['airTemperatureMin'] as num?)?.toDouble() ?? 0.0,
       airTemperatureMax: (json['airTemperatureMax'] as num?)?.toDouble() ?? 0.0,
       airHumidityMin: (json['airHumidityMin'] as num?)?.toDouble() ?? 0.0,
@@ -164,7 +158,6 @@ class ParameterThresholds {
           (json['soilTemperatureMax'] as num?)?.toDouble() ?? 0.0,
       soilMoistureMin: (json['soilMoistureMin'] as num?)?.toDouble() ?? 0.0,
       soilMoistureMax: (json['soilMoistureMax'] as num?)?.toDouble() ?? 0.0,
-      // ✅ FIN DE LA CORRECCIÓN
     );
   }
 }

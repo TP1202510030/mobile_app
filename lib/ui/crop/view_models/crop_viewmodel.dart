@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/actuator.dart';
+import 'package:mobile_app/domain/models/grow_room/actuator.dart';
 import 'package:mobile_app/data/services/api/model/grow_room/control_action_service.dart';
 import 'package:mobile_app/data/services/api/model/grow_room/measurement_service.dart';
 import 'package:mobile_app/domain/models/grow_room/control_action.dart';
@@ -22,8 +22,16 @@ class CropViewModel extends ChangeNotifier {
   bool _isLoadingActions = false;
   String? _actionsError;
 
-  Map<Parameter, List<Measurement>> get measurementsByParameter =>
-      _measurementsByParameter;
+  Map<Parameter, List<Measurement>> get measurementsByParameter {
+    return _measurementsByParameter.map((parameter, fullList) {
+      if (fullList.length > 12) {
+        final limitedList = fullList.sublist(fullList.length - 12);
+        return MapEntry(parameter, limitedList);
+      }
+      return MapEntry(parameter, fullList);
+    });
+  }
+
   bool get isLoadingMeasurements => _isLoadingMeasurements;
   String? get measurementError => _measurementError;
   int get selectedSectionIndex => _selectedSectionIndex;
@@ -50,7 +58,7 @@ class CropViewModel extends ChangeNotifier {
   Map<String, List<ControlAction>> get actionsGroupedByDate {
     final Map<String, List<ControlAction>> grouped = {};
     for (var action in _controlActions) {
-      final formattedDate = _formatDateForHeader(action.timestamp);
+      final formattedDate = _formatDateForHeader(action.timestamp.toLocal());
       if (!grouped.containsKey(formattedDate)) {
         grouped[formattedDate] = [];
       }
@@ -102,7 +110,6 @@ class CropViewModel extends ChangeNotifier {
     try {
       _controlActions =
           await _controlActionService.getControlActionsForCurrentPhase(cropId);
-      // Ordenamos por fecha descendente para la vista de historial
       _controlActions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     } catch (e) {
       _actionsError = 'Error al cargar el historial de acciones: $e';
@@ -123,7 +130,6 @@ class CropViewModel extends ChangeNotifier {
     } else if (dateToCompare == yesterday) {
       return 'Ayer';
     } else {
-      // Usamos el paquete `intl` para un formato localizado y legible.
       return DateFormat.yMMMMd('es_ES').format(date);
     }
   }

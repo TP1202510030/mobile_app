@@ -5,20 +5,24 @@ import 'package:mobile_app/domain/models/grow_room/grow_room.dart';
 class HomeViewModel extends ChangeNotifier {
   final GrowRoomService _service;
   List<GrowRoom> _growRooms = [];
+  int _selectedTabIndex = 0;
+  bool _isLoading = false;
 
   HomeViewModel(this._service) {
-    fetchGrowRooms(1); // Example companyId, replace with actual
+    fetchGrowRooms(1);
     searchController.addListener(_onSearchChanged);
   }
 
   final TextEditingController searchController = TextEditingController();
 
   List<GrowRoom> get growRooms => _filteredGrowRooms;
-  String _searchQuery = '';
   String get searchQuery => _searchQuery;
-  bool _hasNotification = false;
   bool get hasNotification => _hasNotification;
+  int get selectedTabIndex => _selectedTabIndex;
+  bool get isLoading => _isLoading;
 
+  String _searchQuery = '';
+  bool _hasNotification = false;
   VoidCallback? onNotificationTap;
 
   set hasNotification(bool value) {
@@ -37,13 +41,24 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchGrowRooms(int companyId) async {
+    _isLoading = true;
+    notifyListeners();
     try {
       _growRooms = await _service.getGrowRoomsByCompanyId(companyId);
       debugPrint(
           'Fetched grow rooms: ${_growRooms.map((room) => room.name).join(', ')}');
-      notifyListeners();
     } catch (e) {
       debugPrint('Error fetching grow rooms: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void selectTab(int index) {
+    if (_selectedTabIndex != index) {
+      _selectedTabIndex = index;
+      notifyListeners();
     }
   }
 
