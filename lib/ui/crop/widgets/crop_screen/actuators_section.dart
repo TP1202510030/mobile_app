@@ -5,10 +5,10 @@ import 'package:mobile_app/domain/models/grow_room/actuator.dart';
 
 import 'package:mobile_app/domain/models/grow_room/control_action.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
-import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 
 class ActuatorsSection extends StatelessWidget {
-  final CropViewModel viewModel;
+  final ActiveCropViewModel viewModel;
   const ActuatorsSection({super.key, required this.viewModel});
 
   @override
@@ -60,7 +60,7 @@ class ActuatorsSection extends StatelessWidget {
 }
 
 class _CurrentStatusSection extends StatelessWidget {
-  final CropViewModel viewModel;
+  final ActiveCropViewModel viewModel;
   const _CurrentStatusSection({required this.viewModel});
 
   @override
@@ -127,7 +127,7 @@ class _ActuatorStatusWidget extends StatelessWidget {
 }
 
 class _HistorySection extends StatelessWidget {
-  final CropViewModel viewModel;
+  final ActiveCropViewModel viewModel;
   const _HistorySection({required this.viewModel});
 
   String _buildHistoryDescription(ControlAction action) {

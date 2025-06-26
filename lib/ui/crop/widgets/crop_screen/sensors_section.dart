@@ -5,11 +5,11 @@ import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
 import 'package:mobile_app/ui/crop/ui/line_chart.dart';
-import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class SensorsSection extends StatefulWidget {
-  final CropViewModel viewModel;
+  final ActiveCropViewModel viewModel;
 
   const SensorsSection({super.key, required this.viewModel});
 
@@ -51,7 +51,7 @@ class _SensorsSectionState extends State<SensorsSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SvgPicture.asset(
-                AppIcons.home,
+                AppIcons.sensor,
                 width: 64.0,
                 height: 64.0,
                 colorFilter: ColorFilter.mode(
@@ -61,7 +61,7 @@ class _SensorsSectionState extends State<SensorsSection> {
               ),
               const SizedBox(height: 12),
               Text(
-                'No hay mediciones disponibles para esta fase',
+                'No hay mediciones para mostrar',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ],

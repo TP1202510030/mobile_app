@@ -9,7 +9,7 @@ import 'package:mobile_app/ui/core/themes/icons.dart';
 
 import 'package:mobile_app/ui/crop/ui/stepper.dart';
 import 'package:mobile_app/ui/crop/view_models/create_crop_viewmodel.dart';
-import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
 import 'package:mobile_app/ui/crop/widgets/create_crop_screen/create_crop_screen.dart';
 import 'package:mobile_app/ui/crop/widgets/crop_screen/crop_screen.dart';
@@ -100,9 +100,14 @@ GoRouter router() => GoRouter(
                 MeasurementService(baseUrl: 'http://localhost:3000');
             final controlActionService =
                 ControlActionService(baseUrl: 'http://localhost:3000');
+            final cropService = CropService(baseUrl: 'http://localhost:3000');
 
-            final viewModel =
-                CropViewModel(cropId, measurementService, controlActionService);
+            final viewModel = ActiveCropViewModel(
+              cropId,
+              cropService,
+              measurementService,
+              controlActionService,
+            );
 
             return buildPageWithoutAnimation<void>(
               context: context,

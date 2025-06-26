@@ -77,7 +77,6 @@ class Crop {
       currentPhase: json['currentPhase'] != null
           ? CropPhase.fromJson(json['currentPhase'] as Map<String, dynamic>)
           : null,
-      // FIX: Se añade un filtro para evitar errores si algún elemento de la lista es nulo.
       phases: phasesList
           .where((p) => p != null)
           .map((p) => CropPhase.fromJson(p as Map<String, dynamic>))

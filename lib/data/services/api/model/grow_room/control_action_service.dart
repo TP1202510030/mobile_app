@@ -27,7 +27,7 @@ class ControlActionService {
     }
   }
 
-  Future<List<ControlAction>> getControlActionsForCurrentPhase(
+  Future<List<ControlAction>> getControlActionsForCurrentPhaseByCropId(
       int cropId) async {
     final response =
         await http.get(Uri.parse('$baseUrl/api/v1/control_actions/$cropId'));

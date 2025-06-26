@@ -22,8 +22,8 @@ class GrowRoomSection extends StatelessWidget {
         CustomSearchBar(
           hintText: "Buscar nave...",
           controller: viewModel.searchController,
-          onChanged: (_) {},
-          onClear: viewModel.searchController.clear,
+          onChanged: viewModel.setSearchQuery,
+          onClear: () => viewModel.setSearchQuery(''),
         ),
         const SizedBox(height: 16),
         Expanded(
@@ -31,6 +31,19 @@ class GrowRoomSection extends StatelessWidget {
             listenable: viewModel,
             builder: (_, __) {
               final rooms = viewModel.growRooms;
+
+              if (rooms.isEmpty && viewModel.searchQuery.isNotEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'No se encontró la nave "${viewModel.searchQuery}"',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                );
+              }
 
               if (rooms.isEmpty) {
                 return Column(
@@ -79,8 +92,7 @@ class GrowRoomSection extends StatelessWidget {
                     );
                   }).toList();
 
-                  final bool canNavigateToCrop =
-                      room.hasActiveCrop && room.latestMeasurements.isNotEmpty;
+                  final bool canNavigateToCrop = room.hasActiveCrop;
 
                   return GrowRoomCard(
                     title: room.name,
