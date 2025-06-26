@@ -10,7 +10,7 @@ class HomeViewModel extends ChangeNotifier {
   String _searchQuery = '';
 
   HomeViewModel(this._service) {
-    fetchGrowRooms(1);
+    fetchGrowRooms(1); // Example companyId, replace with actual
   }
 
   final TextEditingController searchController = TextEditingController();
@@ -51,6 +51,10 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> refreshGrowRooms() async {
+    await fetchGrowRooms(1); // Example companyId, replace with actual
   }
 
   void selectTab(int index) {

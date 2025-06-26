@@ -185,6 +185,10 @@ class ActiveCropViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshData() async {
+    await loadInitialData();
+  }
+
   Future<void> loadInitialData() async {
     _isLoadingCrop = true;
     _error = null;
@@ -211,7 +215,6 @@ class ActiveCropViewModel extends ChangeNotifier {
     final phaseId = selectedPhase?.id;
     if (phaseId == null) return;
 
-    // Cargar mediciones y acciones en paralelo
     _isLoadingMeasurements = true;
     _isLoadingActions = true;
     notifyListeners();
@@ -239,7 +242,6 @@ class ActiveCropViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ NUEVOS MÉTODOS DE PAGINACIÓN
   void goToNextPhase() {
     if (canGoForward) {
       _selectedPhaseIndex++;
@@ -256,13 +258,12 @@ class ActiveCropViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ NUEVO: Lógica para finalizar la fase
   Future<void> advancePhase() async {
     _isLoadingCrop = true;
     notifyListeners();
     try {
       await _cropService.advanceCropPhase(cropId);
-      // Recargar todo para reflejar el nuevo estado del cultivo
+
       await loadInitialData();
     } catch (e) {
       _error = "Error al finalizar la fase: $e";

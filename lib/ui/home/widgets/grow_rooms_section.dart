@@ -67,46 +67,52 @@ class GrowRoomSection extends StatelessWidget {
                 );
               }
 
-              return ListView.separated(
-                itemCount: rooms.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, index) {
-                  final room = rooms[index];
+              return RefreshIndicator(
+                onRefresh: viewModel.refreshGrowRooms,
+                child: ListView.separated(
+                  itemCount: rooms.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, index) {
+                    final room = rooms[index];
 
-                  final params = room.latestMeasurements.map((m) {
-                    final parameterEnum = ParameterInfo.fromKey(m.parameter);
-                    return ParameterIcon(
-                      iconPath: parameterEnum.iconPath,
-                      value: m.value,
-                      unitOfMeasure: m.unitOfMeasurement,
+                    final params = room.latestMeasurements.map((m) {
+                      final parameterEnum = ParameterInfo.fromKey(m.parameter);
+                      return ParameterIcon(
+                        iconPath: parameterEnum.iconPath,
+                        value: m.value,
+                        unitOfMeasure: m.unitOfMeasurement,
+                      );
+                    }).toList();
+
+                    final actuators = room.actuatorStates.entries.map((entry) {
+                      final actuatorName = entry.key;
+                      final actuatorState = entry.value;
+
+                      return ActuatorIcon(
+                        iconPath: IconUtils.getIconForActuator(actuatorName),
+                        isActive: actuatorState == 'ACTIVATED',
+                      );
+                    }).toList();
+
+                    final bool canNavigateToCrop = room.hasActiveCrop;
+
+                    return GrowRoomCard(
+                      title: room.name,
+                      imagePath: room.imageUrl,
+                      parameters: params,
+                      actuators: actuators,
+                      onTap: canNavigateToCrop
+                          ? () => context.push(
+                                '/crop/${room.activeCropId}',
+                                extra: room.name,
+                              )
+                          : null,
+                      hasActiveCrop: room.hasActiveCrop,
+                      onStartCrop: () => context.push(Routes.createCrop
+                          .replaceAll(':growRoomId', room.id.toString())),
                     );
-                  }).toList();
-
-                  final actuators = room.actuatorStates.entries.map((entry) {
-                    final actuatorName = entry.key;
-                    final actuatorState = entry.value;
-
-                    return ActuatorIcon(
-                      iconPath: IconUtils.getIconForActuator(actuatorName),
-                      isActive: actuatorState == 'ACTIVATED',
-                    );
-                  }).toList();
-
-                  final bool canNavigateToCrop = room.hasActiveCrop;
-
-                  return GrowRoomCard(
-                    title: room.name,
-                    imagePath: room.imageUrl,
-                    parameters: params,
-                    actuators: actuators,
-                    onTap: canNavigateToCrop
-                        ? () => context.push('/crop/${room.id}')
-                        : null,
-                    hasActiveCrop: room.hasActiveCrop,
-                    onStartCrop: () => context.push(Routes.createCrop
-                        .replaceAll(':growRoomId', room.id.toString())),
-                  );
-                },
+                  },
+                ),
               );
             },
           ),

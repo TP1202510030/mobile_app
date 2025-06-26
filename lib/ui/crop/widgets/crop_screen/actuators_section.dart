@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/models/grow_room/actuator.dart';
-
 import 'package:mobile_app/domain/models/grow_room/control_action.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
@@ -16,45 +15,62 @@ class ActuatorsSection extends StatelessWidget {
     return ListenableBuilder(
       listenable: viewModel,
       builder: (context, child) {
-        if (viewModel.isLoadingActions) {
+        if (viewModel.isLoadingActions && viewModel.controlActions.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
+
         if (viewModel.actionsError != null) {
           return Center(child: Text(viewModel.actionsError!));
         }
-        if (viewModel.controlActions.isEmpty) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                AppIcons.actuator,
-                width: 64.0,
-                height: 64.0,
-                colorFilter: ColorFilter.mode(
-                  Theme.of(context).colorScheme.onSurface,
-                  BlendMode.srcIn,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'No hay acciones de control para mostrar',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            ],
-          );
-        }
 
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CurrentStatusSection(viewModel: viewModel),
-              const SizedBox(height: 24),
-              _HistorySection(viewModel: viewModel),
-            ],
-          ),
+        return RefreshIndicator(
+          onRefresh: viewModel.refreshData,
+          child: _buildContent(context),
         );
       },
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    if (viewModel.controlActions.isEmpty) {
+      return Stack(
+        children: [
+          ListView(),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  AppIcons.actuator,
+                  width: 64.0,
+                  height: 64.0,
+                  colorFilter: ColorFilter.mode(
+                    Theme.of(context).colorScheme.onSurface,
+                    BlendMode.srcIn,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'No hay acciones de control para mostrar',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CurrentStatusSection(viewModel: viewModel),
+          const SizedBox(height: 24),
+          _HistorySection(viewModel: viewModel),
+        ],
+      ),
     );
   }
 }
@@ -95,7 +111,6 @@ class _CurrentStatusSection extends StatelessWidget {
   }
 }
 
-// Widget para mostrar el estado de un solo actuador
 class _ActuatorStatusWidget extends StatelessWidget {
   final Actuator actuator;
   final ControlAction? latestAction;

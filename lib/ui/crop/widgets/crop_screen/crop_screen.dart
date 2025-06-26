@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/button.dart';
 import 'package:mobile_app/ui/core/ui/horizontal_option_list.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 import 'package:mobile_app/ui/crop/widgets/crop_screen/sensors_section.dart';
@@ -127,20 +128,30 @@ class CropScreen extends StatelessWidget {
           ),
         ),
         if (viewModel.isCurrentActivePhase)
-          ElevatedButton(
-            onPressed: () {
-              final title = viewModel.isLastPhase
-                  ? "Finalizar Cultivo"
-                  : "Finalizar Fase";
-              final content = viewModel.isLastPhase
-                  ? '¿Estás seguro de que deseas finalizar este cultivo? Esta acción no se puede deshacer.'
-                  : '¿Estás seguro de que deseas avanzar a la siguiente fase?';
-              _showConfirmationDialog(
-                  context, title, content, viewModel.advancePhase);
-            },
-            child: Text(
-                viewModel.isLastPhase ? 'Finalizar Cultivo' : 'Finalizar Fase'),
-          )
+          SizedBox(
+              width: 150,
+              child: CustomButton(
+                onTap: () {
+                  final title = viewModel.isLastPhase
+                      ? "Finalizar Cultivo"
+                      : "Finalizar Fase";
+
+                  final content = viewModel.isLastPhase
+                      ? '¿Estás seguro de que deseas finalizar este cultivo? Esta acción no se puede deshacer.'
+                      : '¿Estás seguro de que deseas avanzar a la siguiente fase?';
+
+                  _showConfirmationDialog(
+                      context, title, content, viewModel.advancePhase);
+                },
+                child: Text(
+                  viewModel.isLastPhase
+                      ? 'Finalizar Cultivo'
+                      : 'Finalizar Fase',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                ),
+              ))
         else
           IconButton(
             icon: const Icon(Icons.arrow_forward_ios),

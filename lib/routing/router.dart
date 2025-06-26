@@ -95,6 +95,8 @@ GoRouter router() => GoRouter(
           pageBuilder: (context, state) {
             final cropIdString = state.pathParameters['cropId']!;
             final cropId = int.parse(cropIdString);
+            final String growRoomName =
+                state.extra as String? ?? 'Nave de Cultivo';
 
             final measurementService =
                 MeasurementService(baseUrl: 'http://localhost:3000');
@@ -114,7 +116,7 @@ GoRouter router() => GoRouter(
               state: state,
               child: BaseLayout(
                 title: Text(
-                  'Nave $cropIdString',
+                  growRoomName,
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 body: CropScreen(viewModel: viewModel),
@@ -192,7 +194,6 @@ GoRouter router() => GoRouter(
         GoRoute(
           path: Routes.finishedCropDetail,
           pageBuilder: (context, state) {
-            final growRoomId = int.parse(state.pathParameters['growRoomId']!);
             final cropId = int.parse(state.pathParameters['cropId']!);
 
             final totalProduction = state.extra as String? ?? 'N/A';

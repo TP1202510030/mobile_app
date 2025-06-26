@@ -7,6 +7,7 @@ class GrowRoom {
   final List<Measurement> latestMeasurements;
   final bool hasActiveCrop;
   final Map<String, String> actuatorStates;
+  final int? activeCropId;
 
   GrowRoom({
     required this.id,
@@ -15,6 +16,7 @@ class GrowRoom {
     required this.latestMeasurements,
     required this.hasActiveCrop,
     required this.actuatorStates,
+    this.activeCropId,
   });
 
   factory GrowRoom.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class GrowRoom {
           .toList(),
       hasActiveCrop: json['hasActiveCrop'],
       actuatorStates: states,
+      activeCropId: json['activeCropId'],
     );
   }
 }
