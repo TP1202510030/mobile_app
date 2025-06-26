@@ -47,6 +47,7 @@ class Crop {
   final int id;
   final DateTime startDate;
   final DateTime? endDate;
+  final double? totalProduction;
   final Duration sensorActivationFrequency;
   final int growRoomId;
   final List<CropPhase> phases;
@@ -56,6 +57,7 @@ class Crop {
     required this.id,
     required this.startDate,
     this.endDate,
+    this.totalProduction,
     required this.sensorActivationFrequency,
     required this.growRoomId,
     required this.phases,
@@ -71,6 +73,7 @@ class Crop {
       endDate: json['endDate'] != null
           ? DateTime.parse(json['endDate'] as String)
           : null,
+      totalProduction: (json['totalProduction'] as num?)?.toDouble(),
       sensorActivationFrequency:
           _parseIso8601Duration(json['sensorActivationFrequency'] as String),
       growRoomId: json['growRoomId'],

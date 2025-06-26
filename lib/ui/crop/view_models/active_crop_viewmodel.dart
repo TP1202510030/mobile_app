@@ -272,4 +272,22 @@ class ActiveCropViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> finishCrop(double totalProduction) async {
+    _isLoadingCrop = true;
+    notifyListeners();
+    try {
+      await _cropService.finishCrop(cropId, totalProduction);
+
+      _isLoadingCrop = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = "Error al finalizar el cultivo: $e";
+      _isLoadingCrop = false;
+      notifyListeners();
+
+      return false;
+    }
+  }
 }

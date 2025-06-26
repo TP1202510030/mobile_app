@@ -113,14 +113,18 @@ class _FinishedCropCard extends StatelessWidget {
     final endDate =
         crop.endDate != null ? dateFormat.format(crop.endDate!) : 'N/A';
 
-    // Dato de ejemplo, idealmente vendría en el objeto Crop.
-    const totalProduction = '24 T';
+    final totalProduction = crop.totalProduction != null
+        ? '${crop.totalProduction!.toStringAsFixed(2)} T'
+        : 'N/A';
 
     return InkWell(
       onTap: () {
         final path = Routes.finishedCropDetail
             .replaceAll(':growRoomId', crop.growRoomId.toString())
-            .replaceAll(':cropId', crop.id.toString());
+            .replaceAll(
+              ':cropId',
+              crop.id.toString(),
+            );
         context.push(path, extra: totalProduction);
       },
       borderRadius: BorderRadius.circular(12.0),

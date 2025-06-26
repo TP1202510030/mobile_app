@@ -69,4 +69,22 @@ class CropService {
       throw Exception('Failed to advance crop phase');
     }
   }
+
+  Future<void> finishCrop(int cropId, double totalProduction) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/v1/crops/$cropId/finish'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, double>{
+        'totalProduction': totalProduction,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      debugPrint(
+          'Failed to finish crop. Status: ${response.statusCode}, Body: ${response.body}');
+      throw Exception('Failed to finish crop');
+    }
+  }
 }

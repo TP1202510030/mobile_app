@@ -165,7 +165,7 @@ class _HistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            timeFormatter.format(time).toLowerCase(),
+            timeFormatter.format(time.toLocal()).toLowerCase(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
