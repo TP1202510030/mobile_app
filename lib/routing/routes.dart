@@ -1,6 +1,7 @@
 abstract final class Routes {
   static const home = '/';
   static const login = '/login';
+  static const start = '/start';
   static const register = '/register';
   static const notifications = '/notifications';
   static const crop = '/crop/:cropId';
