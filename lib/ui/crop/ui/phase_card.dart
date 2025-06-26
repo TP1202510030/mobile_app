@@ -19,6 +19,7 @@ class PhaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
+      color: Theme.of(context).colorScheme.onPrimary,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: Theme.of(context).colorScheme.outline),
         borderRadius: BorderRadius.circular(12),
@@ -38,13 +39,11 @@ class PhaseCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
                 labelText: 'Nombre de la Fase',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.label_outline),
               ),
             ),
             const SizedBox(height: 12),

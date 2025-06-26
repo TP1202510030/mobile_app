@@ -9,7 +9,6 @@ class FinishedCropsViewModel extends ChangeNotifier {
   final CropService _cropService;
   final GrowRoomService _growRoomService;
 
-  // STATE
   List<Crop> _finishedCrops = [];
   bool _isLoading = true;
   String? _error;
@@ -18,7 +17,6 @@ class FinishedCropsViewModel extends ChangeNotifier {
 
   final TextEditingController searchController = TextEditingController();
 
-  // GETTERS
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get growRoomName => _growRoomName;
@@ -27,36 +25,30 @@ class FinishedCropsViewModel extends ChangeNotifier {
     if (_searchQuery.isEmpty) {
       return _finishedCrops;
     }
-    // Filtra los cultivos por su ID
     return _finishedCrops
         .where(
             (crop) => crop.id.toString().contains(_searchQuery.toLowerCase()))
         .toList();
   }
 
-  // CONSTRUCTOR
   FinishedCropsViewModel({
     required this.growRoomId,
     required CropService cropService,
     required GrowRoomService growRoomService,
   })  : _cropService = cropService,
         _growRoomService = growRoomService {
-    searchController.addListener(_onSearchChanged);
     fetchAllData();
   }
 
-  // LIFECYCLE
   @override
   void dispose() {
-    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();
   }
 
-  // METHODS
-  void _onSearchChanged() {
-    if (_searchQuery != searchController.text) {
-      _searchQuery = searchController.text;
+  void setSearchQuery(String query) {
+    if (_searchQuery != query) {
+      _searchQuery = query;
       notifyListeners();
     }
   }
@@ -64,7 +56,6 @@ class FinishedCropsViewModel extends ChangeNotifier {
   Future<void> fetchAllData() async {
     _isLoading = true;
     _error = null;
-
     notifyListeners();
 
     try {

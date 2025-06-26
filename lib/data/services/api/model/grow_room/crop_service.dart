@@ -53,4 +53,18 @@ class CropService {
       throw Exception('Failed to load crops');
     }
   }
+
+  Future<Crop> getCropById(int cropId) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/crops/$cropId'));
+
+    if (response.statusCode == 200) {
+      debugPrint('Respuesta JSON para el cultivo #$cropId: ${response.body}');
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      return Crop.fromJson(data as Map<String, dynamic>);
+    } else if (response.statusCode == 404) {
+      throw Exception('Crop with id $cropId not found');
+    } else {
+      throw Exception('Failed to load crop with id $cropId');
+    }
+  }
 }

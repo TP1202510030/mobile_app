@@ -19,4 +19,6 @@ abstract final class AppIcons {
   static const String sensor = '${_basePath}sensor$_extension';
   static const String actuator = '${_basePath}actuator$_extension';
   static const String notAvailable = '${_basePath}notAvailable$_extension';
+  static const String mushroom = '${_basePath}mushroom$_extension';
+  static const String calendar = '${_basePath}calendar$_extension';
 }

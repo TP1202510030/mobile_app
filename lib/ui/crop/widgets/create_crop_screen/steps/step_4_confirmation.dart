@@ -20,18 +20,21 @@ class Step4Confirmation extends StatelessWidget {
             'Confirmar Datos',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 24),
           Text(
             'Revisa todos los ajustes antes de iniciar el nuevo cultivo en la nave seleccionada.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           ListTile(
-            title: const Text('Frecuencia de monitoreo'),
-            trailing:
-                Text(_formatDuration(viewModel.sensorActivationFrequency)),
+            title: Text('Frecuencia de monitoreo',
+                style: Theme.of(context).textTheme.bodyMedium),
+            trailing: Text(
+              _formatDuration(viewModel.sensorActivationFrequency),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
-          const Divider(),
+          Divider(color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
           ListenableBuilder(
             listenable: viewModel,

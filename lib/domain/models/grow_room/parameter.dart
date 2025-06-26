@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 
 enum Parameter {
@@ -58,7 +59,7 @@ extension ParameterInfo on Parameter {
     return Parameter.values.firstWhere(
       (p) => p.key == key,
       orElse: () {
-        print('Advertencia: Clave de parámetro desconocida: $key');
+        debugPrint('Advertencia: Clave de parámetro desconocida: $key');
         return Parameter.airTemperature;
       },
     );

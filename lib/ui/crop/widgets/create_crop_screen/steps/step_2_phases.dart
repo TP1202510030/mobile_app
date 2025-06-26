@@ -16,7 +16,7 @@ class Step2Phases extends StatelessWidget {
           'Define las Fases del Cultivo',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
         Text(
           'Especifica cuántas fases tendrá el cultivo y define la duración de cada una.',
           style: Theme.of(context).textTheme.bodyMedium,
@@ -35,7 +35,6 @@ class Step2Phases extends StatelessWidget {
                     nameController: viewModel.phases[index].nameController,
                     durationController:
                         viewModel.phases[index].durationController,
-                    // Permite borrar solo si hay más de una fase.
                     canBeDeleted: viewModel.phases.length > 1,
                     onDelete: () => viewModel.removePhase(index),
                   );
@@ -45,20 +44,26 @@ class Step2Phases extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        CustomButton(
+        InkWell(
           onTap: viewModel.addPhase,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                'Añadir otra fase',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                    ),
+              Expanded(
+                child: Text(
+                  'Añadir nueva fase',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ],
           ),
-        )
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }

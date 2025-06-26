@@ -26,12 +26,23 @@ class _HorizontalOptionListState extends State<HorizontalOptionList> {
     selectedIndex = widget.initialIndex;
   }
 
+  @override
+  void didUpdateWidget(covariant HorizontalOptionList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialIndex != selectedIndex) {
+      setState(() {
+        selectedIndex = widget.initialIndex;
+      });
+    }
+  }
+
   void _onOptionTap(int index) {
+    widget.options[index].onTap?.call();
+    widget.onItemSelected?.call(index);
+
     setState(() {
       selectedIndex = index;
     });
-    widget.options[index].onTap?.call();
-    widget.onItemSelected?.call(index);
   }
 
   @override

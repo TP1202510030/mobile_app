@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/models/grow_room/actuator.dart';
 
 import 'package:mobile_app/domain/models/grow_room/control_action.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
 
 class ActuatorsSection extends StatelessWidget {
@@ -22,7 +23,25 @@ class ActuatorsSection extends StatelessWidget {
           return Center(child: Text(viewModel.actionsError!));
         }
         if (viewModel.controlActions.isEmpty) {
-          return const Center(child: Text('No hay historial de acciones.'));
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                AppIcons.actuator,
+                width: 64.0,
+                height: 64.0,
+                colorFilter: ColorFilter.mode(
+                  Theme.of(context).colorScheme.onSurface,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No hay acciones de control para mostrar',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
+          );
         }
 
         return SingleChildScrollView(
@@ -40,7 +59,6 @@ class ActuatorsSection extends StatelessWidget {
   }
 }
 
-// Widget para la sección de estado actual
 class _CurrentStatusSection extends StatelessWidget {
   final CropViewModel viewModel;
   const _CurrentStatusSection({required this.viewModel});
@@ -108,7 +126,6 @@ class _ActuatorStatusWidget extends StatelessWidget {
   }
 }
 
-// Widget para la sección del historial
 class _HistorySection extends StatelessWidget {
   final CropViewModel viewModel;
   const _HistorySection({required this.viewModel});
@@ -179,7 +196,7 @@ class _HistorySection extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   );
-                }).toList(),
+                }),
               ],
             );
           },

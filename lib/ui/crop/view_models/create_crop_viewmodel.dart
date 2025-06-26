@@ -91,6 +91,28 @@ class CreateCropViewModel extends ChangeNotifier {
   final List<_PhaseViewModel> _phases = [];
   List<_PhaseViewModel> get phases => _phases;
 
+  String? getThresholdErrorText(ThresholdControllers controllers) {
+    final minText = controllers.minController.text.trim();
+    final maxText = controllers.maxController.text.trim();
+
+    if (minText.isEmpty || maxText.isEmpty) {
+      return null;
+    }
+
+    final minVal = double.tryParse(minText);
+    final maxVal = double.tryParse(maxText);
+
+    if (minVal == null || maxVal == null) {
+      return null;
+    }
+
+    if (minVal > maxVal) {
+      return 'Min debe ser menor que Max';
+    }
+
+    return null;
+  }
+
   bool get isCurrentStepValid {
     switch (_currentStep) {
       case 0:
@@ -99,7 +121,7 @@ class CreateCropViewModel extends ChangeNotifier {
         return _isStep2Valid();
       case 2:
         return _isStep3Valid();
-      case 3: // El paso de confirmación siempre es válido para continuar
+      case 3:
         return true;
       default:
         return false;
@@ -107,13 +129,11 @@ class CreateCropViewModel extends ChangeNotifier {
   }
 
   bool _isStep1Valid() {
-    // La frecuencia es válida si no es cero.
     return sensorActivationFrequency > Duration.zero;
   }
 
   bool _isStep2Valid() {
     if (phases.isEmpty) return false;
-    // Válido si todas las fases tienen nombre y duración.
     return phases.every((phase) =>
         phase.nameController.text.trim().isNotEmpty &&
         phase.durationController.text.trim().isNotEmpty);
@@ -121,15 +141,14 @@ class CreateCropViewModel extends ChangeNotifier {
 
   bool _isStep3Valid() {
     if (phases.isEmpty) return false;
-    // Válido si para cada fase, todos sus umbrales (min y max) están llenos.
     return phases.every((phase) => phase.thresholdControllers.values.every(
         (controllers) =>
             controllers.minController.text.trim().isNotEmpty &&
-            controllers.maxController.text.trim().isNotEmpty));
+            controllers.maxController.text.trim().isNotEmpty &&
+            getThresholdErrorText(controllers) == null));
   }
 
   void addPhase() {
-    // ✅ CAMBIO: Pasamos `notifyListeners` como el callback de actualización.
     _phases.add(_PhaseViewModel(onUpdate: notifyListeners));
     notifyListeners();
   }
@@ -211,9 +230,6 @@ class CreateCropViewModel extends ChangeNotifier {
         result += '${seconds}S';
       }
     }
-
-    // If only days are present, T might be redundant but is valid.
-    // If no time parts, remove T.
     if (result.endsWith('T')) {
       return result.substring(0, result.length - 1);
     }

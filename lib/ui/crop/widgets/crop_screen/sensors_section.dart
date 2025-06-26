@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/domain/models/grow_room/parameter.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
 import 'package:mobile_app/ui/crop/ui/line_chart.dart';
@@ -16,7 +18,7 @@ class SensorsSection extends StatefulWidget {
 }
 
 class _SensorsSectionState extends State<SensorsSection> {
-  Map<Parameter, TooltipBehavior> _tooltipBehaviors = {};
+  final Map<Parameter, TooltipBehavior> _tooltipBehaviors = {};
 
   @override
   void initState() {
@@ -45,12 +47,24 @@ class _SensorsSectionState extends State<SensorsSection> {
         }
 
         if (widget.viewModel.measurementsByParameter.isEmpty) {
-          return Center(
-            child: Text(
-              'No hay mediciones disponibles para esta fase.',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SvgPicture.asset(
+                AppIcons.home,
+                width: 64.0,
+                height: 64.0,
+                colorFilter: ColorFilter.mode(
+                  Theme.of(context).colorScheme.onSurface,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No hay mediciones disponibles para esta fase',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ],
           );
         }
 

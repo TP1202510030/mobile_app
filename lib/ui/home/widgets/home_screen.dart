@@ -1,16 +1,12 @@
-// lib/ui/home/widgets/home_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_app/ui/core/themes/colors.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/horizontal_option_list.dart';
-import 'package:mobile_app/ui/home/widgets/archive_section.dart'; // 1. Importa la sección de archivo
+import 'package:mobile_app/ui/home/widgets/archive_section.dart';
 import 'package:mobile_app/ui/home/widgets/grow_rooms_section.dart';
 import '../view_models/home_viewmodel.dart';
 import 'package:flutter_svg/svg.dart';
-
-// Nota: He eliminado las clases duplicadas RedDot y NotificationIcon
-// que estaban al final del fichero en tu código.
 
 class HomeScreen extends StatelessWidget {
   final HomeViewModel viewModel;
@@ -20,8 +16,6 @@ class HomeScreen extends StatelessWidget {
     required this.viewModel,
   });
 
-  // 2. Convierte las opciones en un método que toma el viewModel
-  //    para poder llamar a `selectTab`.
   List<OptionItemData> _getHorizontalOptions(HomeViewModel viewModel) => [
         OptionItemData(
           title: "Naves de cultivo",
@@ -35,8 +29,6 @@ class HomeScreen extends StatelessWidget {
         ),
       ];
 
-  // 3. Crea un método para devolver el widget de la sección correcta,
-  //    igual que en tu ejemplo de CropScreen.
   Widget _getCurrentSectionWidget(int selectedIndex, HomeViewModel viewModel) {
     switch (selectedIndex) {
       case 0:
@@ -44,12 +36,15 @@ class HomeScreen extends StatelessWidget {
       case 1:
         return ArchiveSection(viewModel: viewModel);
       default:
-        return const SizedBox.shrink(); // Fallback por si acaso
+        return const SizedBox.shrink();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final DateFormat formatter = DateFormat("dd 'de' MMMM, y", 'es');
+    final String formattedDate = formatter.format(DateTime.now());
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
       child: Column(
@@ -57,12 +52,11 @@ class HomeScreen extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              DateTime.now().toString(),
+              formattedDate,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
           const SizedBox(height: 32),
-
           ListenableBuilder(
             listenable: viewModel,
             builder: (context, _) {
@@ -74,18 +68,13 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: 32),
-
-          // 5. Usa un ListenableBuilder para reconstruir la sección principal
-          //    cuando cambie el estado en el viewModel.
           Expanded(
             child: ListenableBuilder(
               listenable: viewModel,
               builder: (context, _) {
-                // Muestra un indicador de carga mientras se obtienen los datos iniciales
                 if (viewModel.isLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                // Muestra la sección correspondiente a la pestaña seleccionada
                 return _getCurrentSectionWidget(
                     viewModel.selectedTabIndex, viewModel);
               },

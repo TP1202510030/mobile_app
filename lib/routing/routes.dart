@@ -7,4 +7,6 @@ abstract final class Routes {
   static const createCrop = '/stepper/:growRoomId';
   static const archive = '/archive';
   static const finishedCrops = '/archive/grow-room/:growRoomId';
+  static const finishedCropDetail =
+      '/archive/grow-room/:growRoomId/crop/:cropId';
 }

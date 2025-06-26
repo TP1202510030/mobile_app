@@ -15,7 +15,7 @@ class Step3Thresholds extends StatelessWidget {
           'Define los Umbrales',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
         Text(
           'Establece los umbrales para temperatura, humedad y CO₂ en cada fase.',
           style: Theme.of(context).textTheme.bodyMedium,
@@ -32,6 +32,7 @@ class Step3Thresholds extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final phase = viewModel.phases[index];
                   return ThresholdCard(
+                    viewModel: viewModel,
                     phaseName: phase.nameController.text.isEmpty
                         ? 'Fase ${index + 1}'
                         : phase.nameController.text,

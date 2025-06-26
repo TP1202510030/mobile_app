@@ -10,8 +10,10 @@ import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/crop/ui/stepper.dart';
 import 'package:mobile_app/ui/crop/view_models/create_crop_viewmodel.dart';
 import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
 import 'package:mobile_app/ui/crop/widgets/create_crop_screen/create_crop_screen.dart';
 import 'package:mobile_app/ui/crop/widgets/crop_screen/crop_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crop_details_screen.dart';
 import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crops_screen.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
@@ -178,6 +180,39 @@ GoRouter router() => GoRouter(
                 ),
                 showBackButton: true,
                 body: FinishedCropsScreen(viewModel: viewModel),
+              ),
+            );
+          },
+        ),
+        GoRoute(
+          path: Routes.finishedCropDetail,
+          pageBuilder: (context, state) {
+            final growRoomId = int.parse(state.pathParameters['growRoomId']!);
+            final cropId = int.parse(state.pathParameters['cropId']!);
+
+            final totalProduction = state.extra as String? ?? 'N/A';
+
+            final viewModel = FinishedCropDetailViewModel(
+              cropId: cropId,
+              cropService: CropService(baseUrl: 'http://localhost:3000'),
+            );
+
+            return buildPageWithoutAnimation<void>(
+              context: context,
+              state: state,
+              child: BaseLayout(
+                title: Text(
+                  'Cultivo #$cropId',
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
+                showBackButton: true,
+                body: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: FinishedCropDetailsScreen(
+                    viewModel: viewModel,
+                    totalProduction: totalProduction,
+                  ),
+                ),
               ),
             );
           },

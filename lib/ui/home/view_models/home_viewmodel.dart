@@ -7,30 +7,21 @@ class HomeViewModel extends ChangeNotifier {
   List<GrowRoom> _growRooms = [];
   int _selectedTabIndex = 0;
   bool _isLoading = false;
+  String _searchQuery = '';
 
   HomeViewModel(this._service) {
     fetchGrowRooms(1);
-    searchController.addListener(_onSearchChanged);
   }
 
   final TextEditingController searchController = TextEditingController();
 
   List<GrowRoom> get growRooms => _filteredGrowRooms;
   String get searchQuery => _searchQuery;
-  bool get hasNotification => _hasNotification;
   int get selectedTabIndex => _selectedTabIndex;
   bool get isLoading => _isLoading;
 
-  String _searchQuery = '';
-  bool _hasNotification = false;
+  bool hasNotification = false;
   VoidCallback? onNotificationTap;
-
-  set hasNotification(bool value) {
-    if (_hasNotification != value) {
-      _hasNotification = value;
-      notifyListeners();
-    }
-  }
 
   List<GrowRoom> get _filteredGrowRooms {
     if (_searchQuery.isEmpty) return _growRooms;
@@ -38,6 +29,13 @@ class HomeViewModel extends ChangeNotifier {
         .where((room) =>
             room.name.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
+  }
+
+  void setSearchQuery(String query) {
+    if (_searchQuery != query) {
+      _searchQuery = query;
+      notifyListeners();
+    }
   }
 
   Future<void> fetchGrowRooms(int companyId) async {
@@ -58,13 +56,10 @@ class HomeViewModel extends ChangeNotifier {
   void selectTab(int index) {
     if (_selectedTabIndex != index) {
       _selectedTabIndex = index;
+      searchController.clear();
+      setSearchQuery('');
       notifyListeners();
     }
-  }
-
-  void _onSearchChanged() {
-    _searchQuery = searchController.text;
-    notifyListeners();
   }
 
   @override

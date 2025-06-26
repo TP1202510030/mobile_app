@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/routing/routes.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/home/ui/archive_grow_room_card.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
@@ -16,9 +18,24 @@ class ArchiveSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (viewModel.growRooms.isEmpty) {
-      return Center(
-        child: Text('No hay naves para mostrar.',
-            style: Theme.of(context).textTheme.bodySmall),
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            AppIcons.home,
+            width: 64.0,
+            height: 64.0,
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.onSurface,
+              BlendMode.srcIn,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No existen naves para mostrar',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ],
       );
     }
 

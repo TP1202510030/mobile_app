@@ -26,7 +26,6 @@ class _CreateCropScreenState extends State<CreateCropScreen> {
     _viewModel = widget.viewModel;
   }
 
-  // ✅ CAMBIO: El dispose se mantiene, es correcto.
   @override
   void dispose() {
     _viewModel.dispose();
@@ -35,8 +34,6 @@ class _CreateCropScreenState extends State<CreateCropScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ CAMBIO: Se eliminan PopScope y Scaffold. El widget raíz ahora es Padding.
-    // Este widget es ahora solo el "cuerpo" de la pantalla.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
       child: Column(
@@ -73,6 +70,7 @@ class _CreateCropScreenState extends State<CreateCropScreen> {
               );
             },
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );

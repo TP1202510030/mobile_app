@@ -32,12 +32,16 @@ class ConfirmationSummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(phaseName, style: textTheme.titleLarge),
                 Text(
-                    duration.isNotEmpty
-                        ? '$duration días'
-                        : 'Duración no definida',
-                    style: textTheme.bodyMedium),
+                  phaseName,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                Text(
+                  duration.isNotEmpty
+                      ? '$duration días'
+                      : 'Duración no definida',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -52,7 +56,7 @@ class ConfirmationSummaryCard extends StatelessWidget {
                     Expanded(
                         flex: 3,
                         child: Text(param.label,
-                            style: textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodySmall,
                             overflow: TextOverflow.ellipsis)),
                     Expanded(
                         flex: 2,

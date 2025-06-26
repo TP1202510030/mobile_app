@@ -22,6 +22,7 @@ class ArchiveGrowRoomCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(_borderRadius),
       child: Card(
         clipBehavior: Clip.antiAlias,
+        color: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(_borderRadius),
@@ -41,7 +42,7 @@ class ArchiveGrowRoomCard extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  colors: [Colors.black.withOpacity(0.9), Colors.transparent],
                   begin: Alignment.bottomCenter,
                   end: Alignment.center,
                 ),
@@ -54,7 +55,7 @@ class ArchiveGrowRoomCard extends StatelessWidget {
               child: Text(
                 name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onTertiary,
                       fontWeight: FontWeight.bold,
                     ),
                 textAlign: TextAlign.center,

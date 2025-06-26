@@ -54,16 +54,24 @@ class Step1Frequency extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                      controller: mController,
-                      decoration: const InputDecoration(labelText: 'Minutos'),
-                      keyboardType: TextInputType.number),
+                    controller: mController,
+                    decoration: const InputDecoration(labelText: 'Minutos'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                      controller: sController,
-                      decoration: const InputDecoration(labelText: 'Segundos'),
-                      keyboardType: TextInputType.number),
+                    controller: sController,
+                    decoration: const InputDecoration(labelText: 'Segundos'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -84,7 +92,7 @@ class Step1Frequency extends StatelessWidget {
                 Navigator.of(ctx).pop();
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -100,7 +108,7 @@ class Step1Frequency extends StatelessWidget {
           'Frecuencia de Monitoreo',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
         Text(
           'Define cada cuánto tiempo se activarán los sensores para medir los parámetros de la nave.',
           style: Theme.of(context).textTheme.bodyMedium,
@@ -117,7 +125,8 @@ class Step1Frequency extends StatelessWidget {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_formatDuration(viewModel.sensorActivationFrequency)),
+                    Text(_formatDuration(viewModel.sensorActivationFrequency),
+                        style: Theme.of(context).textTheme.bodyMedium),
                     const SizedBox(width: 8),
                     const Icon(Icons.chevron_right),
                   ],
