@@ -44,10 +44,6 @@ class ActuatorsSection extends StatelessWidget {
                   AppIcons.actuator,
                   width: 64.0,
                   height: 64.0,
-                  colorFilter: ColorFilter.mode(
-                    Theme.of(context).colorScheme.onSurface,
-                    BlendMode.srcIn,
-                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -121,11 +117,21 @@ class _ActuatorStatusWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isActive = latestAction?.controlActionType == 'ACTIVATED';
     final statusText = isActive ? 'On' : 'Off';
-    final statusColor = isActive ? Colors.green.shade600 : Colors.grey.shade600;
+    final statusColor = isActive
+        ? Colors.green.shade600
+        : Theme.of(context).colorScheme.secondary;
 
     return Column(
       children: [
-        SvgPicture.asset(actuator.iconPath, width: 40, height: 40),
+        SvgPicture.asset(
+          actuator.iconPath,
+          width: 40,
+          height: 40,
+          colorFilter: ColorFilter.mode(
+            statusColor,
+            BlendMode.srcIn,
+          ),
+        ),
         const SizedBox(height: 8),
         Text(actuator.label, style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 4),

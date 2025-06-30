@@ -134,6 +134,7 @@ class _SensorsSectionState extends State<SensorsSection> {
                   iconPath: parameterEnum.iconPath,
                   value: latestMeasurement.value,
                   unitOfMeasure: latestMeasurement.unitOfMeasurement,
+                  
                 );
               }).toList(),
             ),
