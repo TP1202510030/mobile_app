@@ -82,9 +82,12 @@ class _GrowRoomCardState extends State<GrowRoomCard> {
                   const SizedBox(height: 10.0),
                   if (widget.hasActiveCrop)
                     if (widget.parameters.isNotEmpty)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: widget.parameters,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: widget.parameters,
+                        ),
                       )
                     else
                       Text(
