@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:mobile_app/ui/core/themes/colors.dart';
 
 class ActuatorIcon extends StatelessWidget {
   final String iconPath;
@@ -17,9 +18,7 @@ class ActuatorIcon extends StatelessWidget {
       width: 32.0,
       height: 32.0,
       colorFilter: ColorFilter.mode(
-        isActive
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.outline,
+        isActive ? AppColors.accent : Theme.of(context).colorScheme.outline,
         BlendMode.srcIn,
       ),
     );

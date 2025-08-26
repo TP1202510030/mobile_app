@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/crop_service.dart';
-import 'package:mobile_app/domain/models/grow_room/parameter.dart';
+import 'package:mobile_app/domain/entities/measurement/parameter.dart';
+import 'package:mobile_app/domain/use_cases/crop/create_crop_use_case.dart';
 import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/crop/ui/stepper.dart';
 
@@ -9,8 +9,9 @@ class ThresholdControllers {
   final TextEditingController minController;
   final TextEditingController maxController;
 
-  ThresholdControllers(
-      {required this.minController, required this.maxController});
+  ThresholdControllers({String min = '', String max = ''})
+      : minController = TextEditingController(text: min),
+        maxController = TextEditingController(text: max);
 
   void dispose() {
     minController.dispose();
@@ -18,15 +19,15 @@ class ThresholdControllers {
   }
 }
 
-class _PhaseViewModel {
+class PhaseViewModel {
   final String id = UniqueKey().toString();
   final VoidCallback _onUpdate;
 
-  late TextEditingController nameController = TextEditingController();
-  late TextEditingController durationController = TextEditingController();
+  late final TextEditingController nameController;
+  late final TextEditingController durationController;
   late final Map<Parameter, ThresholdControllers> thresholdControllers;
 
-  _PhaseViewModel({
+  PhaseViewModel({
     String name = '',
     String duration = '',
     required VoidCallback onUpdate,
@@ -36,10 +37,9 @@ class _PhaseViewModel {
       ..addListener(_onUpdate);
     thresholdControllers = {
       for (var param in Parameter.values)
-        param: ThresholdControllers(
-          minController: TextEditingController()..addListener(_onUpdate),
-          maxController: TextEditingController()..addListener(_onUpdate),
-        ),
+        param: ThresholdControllers()
+          ..minController.addListener(_onUpdate)
+          ..maxController.addListener(_onUpdate),
     };
   }
 
@@ -49,21 +49,18 @@ class _PhaseViewModel {
     for (var controllerSet in thresholdControllers.values) {
       controllerSet.minController.removeListener(_onUpdate);
       controllerSet.maxController.removeListener(_onUpdate);
-    }
-
-    nameController.dispose();
-    durationController.dispose();
-    for (var controllerSet in thresholdControllers.values) {
       controllerSet.dispose();
     }
+    nameController.dispose();
+    durationController.dispose();
   }
 }
 
 class CreateCropViewModel extends ChangeNotifier {
   final int _growRoomId;
-  final CropService _cropService;
+  final CreateCropUseCase _createCropUseCase;
 
-  CreateCropViewModel(this._growRoomId, this._cropService) {
+  CreateCropViewModel(this._growRoomId, this._createCropUseCase) {
     _pageController = PageController();
     _steps = [
       StepData(title: 'Frecuencia', isActive: true),
@@ -71,56 +68,37 @@ class CreateCropViewModel extends ChangeNotifier {
       StepData(title: 'Umbrales'),
       StepData(title: 'Confirmar'),
     ];
-    addPhase();
+
+    addPhase(name: 'Fase 1');
   }
 
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
   late final PageController _pageController;
   PageController get pageController => _pageController;
-
   late final List<StepData> _steps;
   List<StepData> get steps => _steps;
-
   int _currentStep = 0;
   int get currentStep => _currentStep;
 
-  // Step 1 Data
-  Duration _sensorActivationFrequency = const Duration(hours: 4, minutes: 15);
+  Duration _sensorActivationFrequency = const Duration(hours: 4);
   Duration get sensorActivationFrequency => _sensorActivationFrequency;
-
-  // Step 2 Data
-  final List<_PhaseViewModel> _phases = [];
-  List<_PhaseViewModel> get phases => _phases;
-
-  String? getThresholdErrorText(ThresholdControllers controllers) {
-    final minText = controllers.minController.text.trim();
-    final maxText = controllers.maxController.text.trim();
-
-    if (minText.isEmpty || maxText.isEmpty) {
-      return null;
-    }
-
-    final minVal = double.tryParse(minText);
-    final maxVal = double.tryParse(maxText);
-
-    if (minVal == null || maxVal == null) {
-      return null;
-    }
-
-    if (minVal > maxVal) {
-      return 'Min debe ser menor que Max';
-    }
-
-    return null;
-  }
+  final List<PhaseViewModel> _phases = [];
+  List<PhaseViewModel> get phases => _phases;
 
   bool get isCurrentStepValid {
     switch (_currentStep) {
       case 0:
-        return _isStep1Valid();
+        return _sensorActivationFrequency > Duration.zero;
       case 1:
-        return _isStep2Valid();
+        return _phases.every((p) =>
+            p.nameController.text.trim().isNotEmpty &&
+            p.durationController.text.trim().isNotEmpty);
       case 2:
-        return _isStep3Valid();
+        return _phases.every((p) => p.thresholdControllers.values.every((c) =>
+            getThresholdErrorText(c) == null &&
+            c.minController.text.isNotEmpty &&
+            c.maxController.text.isNotEmpty));
       case 3:
         return true;
       default:
@@ -128,55 +106,45 @@ class CreateCropViewModel extends ChangeNotifier {
     }
   }
 
-  bool _isStep1Valid() {
-    return sensorActivationFrequency > Duration.zero;
+  String? getThresholdErrorText(ThresholdControllers controllers) {
+    final minText = controllers.minController.text.trim();
+    final maxText = controllers.maxController.text.trim();
+    if (minText.isEmpty || maxText.isEmpty) return null;
+    final minVal = double.tryParse(minText);
+    final maxVal = double.tryParse(maxText);
+    if (minVal == null || maxVal == null) return "Valor inválido";
+    if (minVal >= maxVal) return 'Min > Max';
+    return null;
   }
 
-  bool _isStep2Valid() {
-    if (phases.isEmpty) return false;
-    return phases.every((phase) =>
-        phase.nameController.text.trim().isNotEmpty &&
-        phase.durationController.text.trim().isNotEmpty);
-  }
-
-  bool _isStep3Valid() {
-    if (phases.isEmpty) return false;
-    return phases.every((phase) => phase.thresholdControllers.values.every(
-        (controllers) =>
-            controllers.minController.text.trim().isNotEmpty &&
-            controllers.maxController.text.trim().isNotEmpty &&
-            getThresholdErrorText(controllers) == null));
-  }
-
-  void addPhase() {
-    _phases.add(_PhaseViewModel(onUpdate: notifyListeners));
+  void addPhase({String name = ''}) {
+    _phases.add(PhaseViewModel(name: name, onUpdate: notifyListeners));
     notifyListeners();
   }
 
   void removePhase(int index) {
-    _phases[index].dispose();
-    _phases.removeAt(index);
-    notifyListeners();
+    if (_phases.length > 1) {
+      _phases[index].dispose();
+      _phases.removeAt(index);
+      notifyListeners();
+    }
   }
 
   void updateSensorFrequency(Duration newFrequency) {
-    _sensorActivationFrequency = newFrequency;
-    notifyListeners();
+    if (_sensorActivationFrequency != newFrequency) {
+      _sensorActivationFrequency = newFrequency;
+      notifyListeners();
+    }
   }
 
   void goToStep(int step) {
-    if (step >= 0 && step < _steps.length) {
-      if (_currentStep != step) {
-        _steps[_currentStep].isActive = false;
-        _steps[step].isActive = true;
-        _currentStep = step;
-        _pageController.animateToPage(
-          step,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        notifyListeners();
-      }
+    if (step >= 0 && step < _steps.length && _currentStep != step) {
+      _steps[_currentStep].isActive = false;
+      _steps[step].isActive = true;
+      _currentStep = step;
+      _pageController.animateToPage(step,
+          duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      notifyListeners();
     }
   }
 
@@ -185,107 +153,72 @@ class CreateCropViewModel extends ChangeNotifier {
       _steps[_currentStep].isCompleted = true;
       goToStep(_currentStep + 1);
     } else {
-      createCrop(context);
+      _submitCropCreation(context);
     }
   }
 
   void previousStep(BuildContext context) {
     if (_currentStep > 0) {
-      _steps[_currentStep].isActive = false;
-      _steps[_currentStep - 1].isCompleted = false;
-      _steps[_currentStep - 1].isActive = true;
-      _currentStep--;
-      _pageController.animateToPage(
-        _currentStep,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      notifyListeners();
+      goToStep(_currentStep - 1);
     } else {
       context.pop();
     }
   }
 
-  String _formatDurationToIso8601(Duration duration) {
-    if (duration == Duration.zero) return 'PT0S';
-    String result = 'P';
-    final days = duration.inDays;
-    final hours = duration.inHours % 24;
-    final minutes = duration.inMinutes % 60;
-    final seconds = duration.inSeconds % 60;
+  Future<void> _submitCropCreation(BuildContext context) async {
+    if (!isCurrentStepValid) return;
 
-    if (days > 0) {
-      result += '${days}D';
-    }
+    _isLoading = true;
+    notifyListeners();
 
-    if (hours > 0 || minutes > 0 || seconds > 0) {
-      result += 'T';
-      if (hours > 0) {
-        result += '${hours}H';
-      }
-      if (minutes > 0) {
-        result += '${minutes}M';
-      }
-      if (seconds > 0) {
-        result += '${seconds}S';
-      }
-    }
-    if (result.endsWith('T')) {
-      return result.substring(0, result.length - 1);
-    }
-
-    return result;
-  }
-
-  Future<void> createCrop(BuildContext context) async {
     try {
-      final phasesData = _phases.map((phaseVM) {
-        final durationInDays =
-            int.tryParse(phaseVM.durationController.text) ?? 0;
-        final thresholds = <String, Map<String, double>>{};
-        phaseVM.thresholdControllers.forEach((param, controllers) {
-          final min = double.tryParse(controllers.minController.text) ?? 0.0;
-          final max = double.tryParse(controllers.maxController.text) ?? 0.0;
-          thresholds['${param.key}Min'] = {'value': min};
-          thresholds['${param.key}Max'] = {'value': max};
-        });
-
-        final parameterThresholds = {
-          for (var entry in thresholds.entries) entry.key: entry.value['value'],
-        };
-
-        return {
-          'name': phaseVM.nameController.text,
-          'phaseDuration':
-              _formatDurationToIso8601(Duration(days: durationInDays)),
-          'parameterThresholds': parameterThresholds,
-        };
-      }).toList();
-
-      final cropData = {
-        'startDate': DateTime.now().toIso8601String(),
-        'endDate': null,
-        'sensorActivationFrequency':
-            _formatDurationToIso8601(_sensorActivationFrequency),
-        'phases': phasesData,
-      };
-
-      await _cropService.createCrop(_growRoomId, cropData);
+      final cropData = _buildCropDataPayload();
+      await _createCropUseCase(
+          CreateCropParams(growRoomId: _growRoomId, cropData: cropData));
 
       if (context.mounted) {
         context.go(Routes.home);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cultivo creado exitosamente!')),
+          const SnackBar(content: Text('¡Cultivo creado exitosamente!')),
         );
       }
     } catch (e) {
-      debugPrint('Error creating crop: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear el cultivo: $e')),
+          SnackBar(content: Text('Error al crear el cultivo: ${e.toString()}')),
         );
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
+  }
+
+  Map<String, dynamic> _buildCropDataPayload() {
+    String formatDuration(Duration d) =>
+        'PT${d.inHours}H${d.inMinutes.remainder(60)}M${d.inSeconds.remainder(60)}S';
+
+    final phasesData = _phases.map((phaseVM) {
+      final durationInDays = int.tryParse(phaseVM.durationController.text) ?? 0;
+      final parameterThresholds = {
+        for (var entry in phaseVM.thresholdControllers.entries) ...{
+          '${entry.key.key}Min':
+              double.tryParse(entry.value.minController.text) ?? 0.0,
+          '${entry.key.key}Max':
+              double.tryParse(entry.value.maxController.text) ?? 0.0,
+        }
+      };
+      return {
+        'name': phaseVM.nameController.text,
+        'duration': 'P${durationInDays}D',
+        'thresholds': parameterThresholds,
+      };
+    }).toList();
+
+    return {
+      'sensorActivationFrequency': formatDuration(_sensorActivationFrequency),
+      'phases': phasesData,
+    };
   }
 
   @override

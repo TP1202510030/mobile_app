@@ -1,243 +1,226 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/crop_service.dart';
-import 'package:mobile_app/domain/models/grow_room/actuator.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/control_action_service.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/measurement_service.dart';
-import 'package:mobile_app/domain/models/grow_room/control_action.dart';
-import 'package:mobile_app/domain/models/grow_room/crop.dart';
-import 'package:mobile_app/domain/models/grow_room/measurement.dart';
-import 'package:mobile_app/domain/models/grow_room/parameter.dart';
+import 'package:mobile_app/domain/entities/control_action/actuator.dart';
+import 'package:mobile_app/domain/entities/control_action/control_action.dart';
+import 'package:mobile_app/domain/entities/crop/crop.dart';
+import 'package:mobile_app/domain/entities/measurement/measurement.dart';
+import 'package:mobile_app/domain/entities/measurement/parameter.dart';
+import 'package:mobile_app/domain/use_cases/crop/advance_crop_phase_use_case.dart';
+import 'package:mobile_app/domain/use_cases/crop/finish_crop_use_case.dart';
+import 'package:mobile_app/domain/use_cases/crop/get_active_crop_data_use_case.dart';
+import 'package:mobile_app/domain/use_cases/control_action/get_control_actions_by_phase_id_use_case.dart';
+import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phase_id_use_case.dart';
 
-class ActiveCropViewModel extends ChangeNotifier {
-  final int cropId;
-  final MeasurementService _measurementService;
-  final ControlActionService _controlActionService;
-  final CropService _cropService;
-
-  int _selectedSectionIndex = 0;
-
-  Crop? _crop;
-  int _selectedPhaseIndex = 0;
-
-  Map<Parameter, List<Measurement>> _measurementsByParameter = {};
-  List<ControlAction> _controlActions = [];
-
-  bool _isLoadingCrop = true;
-  String? _error;
-
-  bool _isLoadingMeasurements = false;
-  String? _measurementError;
-
-  bool _isLoadingActions = false;
-  String? _actionsError;
-
-  ActiveCropViewModel(
-    this.cropId,
-    this._cropService,
-    this._measurementService,
-    this._controlActionService,
-  ) {
-    loadInitialData();
-  }
-
-  bool get isLoading => _isLoadingCrop;
-  String? get error => _error;
-
-  bool get isLoadingMeasurements => _isLoadingMeasurements;
-  String? get measurementError => _measurementError;
-  int get selectedSectionIndex => _selectedSectionIndex;
-
-  List<ControlAction> get controlActions => _controlActions;
-  bool get isLoadingActions => _isLoadingActions;
-  String? get actionsError => _actionsError;
-
-  CropPhase? get selectedPhase => _crop?.phases[_selectedPhaseIndex];
-  bool get canGoBack => _selectedPhaseIndex > 0;
-  bool get canGoForward =>
-      _crop != null && _selectedPhaseIndex < _crop!.phases.length - 1;
-
-  bool get isCurrentActivePhase {
-    if (_crop?.currentPhase == null || selectedPhase == null) return false;
-    return _crop!.currentPhase!.id == selectedPhase!.id;
-  }
-
-  bool get isLastPhase {
-    if (_crop == null) return false;
-    return _selectedPhaseIndex == _crop!.phases.length - 1;
-  }
-
-  Map<Parameter, List<Measurement>> get measurementsByParameter {
-    return _measurementsByParameter.map((parameter, fullList) {
-      if (fullList.length > 12) {
-        final limitedList = fullList.sublist(fullList.length - 12);
-        return MapEntry(parameter, limitedList);
-      }
-      return MapEntry(parameter, fullList);
-    });
-  }
-
-  Map<Actuator, ControlAction?> get latestActuatorStates {
-    final Map<Actuator, ControlAction> latestStates = {};
-    for (var action in _controlActions) {
-      final actuatorType = ActuatorInfo.fromKey(action.actuatorType);
-      if (!latestStates.containsKey(actuatorType) ||
-          action.timestamp.isAfter(latestStates[actuatorType]!.timestamp)) {
-        latestStates[actuatorType] = action;
+class _PhaseDataProcessor {
+  static Map<Parameter, List<Measurement>> groupMeasurements(
+      List<Measurement> measurements) {
+    final Map<Parameter, List<Measurement>> groupedData = {};
+    for (var m in measurements) {
+      try {
+        final key = ParameterData.fromKey(m.parameter);
+        (groupedData[key] ??= []).add(m);
+      } catch (e) {
+        developer.log("Parámetro desconocido omitido: ${m.parameter}");
       }
     }
-    final fullMap = {
-      for (var type in Actuator.values) type: latestStates[type]
-    };
-    return fullMap;
+    groupedData.forEach(
+        (_, value) => value.sort((a, b) => a.timestamp.compareTo(b.timestamp)));
+    return groupedData;
   }
 
-  Map<String, List<ControlAction>> get actionsGroupedByDate {
-    final Map<String, List<ControlAction>> grouped = {};
-    for (var action in _controlActions) {
-      final formattedDate = _formatDateForHeader(action.timestamp.toLocal());
-      if (!grouped.containsKey(formattedDate)) {
-        grouped[formattedDate] = [];
+  static Map<Actuator, ControlAction?> getLatestActuatorStates(
+      List<ControlAction> actions) {
+    final Map<Actuator, ControlAction> latest = {};
+    for (var action in actions) {
+      try {
+        final type = ActuatorData.fromKey(action.actuatorType);
+        if (!latest.containsKey(type) ||
+            action.timestamp.isAfter(latest[type]!.timestamp)) {
+          latest[type] = action;
+        }
+      } catch (e) {
+        developer.log("Actuador desconocido omitido: ${action.actuatorType}");
       }
-      grouped[formattedDate]!.add(action);
+    }
+    return {for (var type in Actuator.values) type: latest[type]};
+  }
+
+  static Map<String, List<ControlAction>> groupActionsByDate(
+      List<ControlAction> actions) {
+    final Map<String, List<ControlAction>> grouped = {};
+    final sortedActions = List<ControlAction>.from(actions)
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    for (var action in sortedActions) {
+      final dateKey = _formatDateHeader(action.timestamp.toLocal());
+      (grouped[dateKey] ??= []).add(action);
     }
     return grouped;
   }
 
-  Future<void> _loadMeasurements() async {
-    _isLoadingMeasurements = true;
-    _measurementError = null;
-    notifyListeners();
-
-    try {
-      final startTime = DateTime.now();
-      final measurements = await _measurementService
-          .getMeasurementsForCurrentPhaseByCropId(cropId);
-      final endTime = DateTime.now();
-      final duration = endTime.difference(startTime).inMilliseconds;
-      debugPrint('Tiempo de la llamada a la API: $duration ms');
-
-      _measurementsByParameter = _groupMeasurementsByParameter(measurements);
-    } catch (e) {
-      _measurementError = 'Failed to load measurements: $e';
-      debugPrint('Error loading measurements: $e');
-    } finally {
-      _isLoadingMeasurements = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadControlActions() async {
-    _isLoadingActions = true;
-    _actionsError = null;
-    notifyListeners();
-    try {
-      _controlActions = await _controlActionService
-          .getControlActionsForCurrentPhaseByCropId(cropId);
-      _controlActions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    } catch (e) {
-      _actionsError = 'Error al cargar el historial de acciones: $e';
-    } finally {
-      _isLoadingActions = false;
-      notifyListeners();
-    }
-  }
-
-  String _formatDateForHeader(DateTime date) {
+  static String _formatDateHeader(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final yesterday = today.subtract(const Duration(days: 1));
     final dateToCompare = DateTime(date.year, date.month, date.day);
+    if (dateToCompare == today) return 'Hoy';
+    if (dateToCompare == yesterday) return 'Ayer';
+    return DateFormat.yMMMMd('es_ES').format(date);
+  }
+}
 
-    if (dateToCompare == today) {
-      return 'Hoy';
-    } else if (dateToCompare == yesterday) {
-      return 'Ayer';
-    } else {
-      return DateFormat.yMMMMd('es_ES').format(date);
+class ActiveCropViewModel extends ChangeNotifier {
+  final int cropId;
+  final GetActiveCropDataUseCase _getActiveCropDataUseCase;
+  final GetMeasurementsForPhaseUseCase _getMeasurementsUseCase;
+  final GetControlActionsForPhaseUseCase _getControlActionsUseCase;
+  final AdvanceCropPhaseUseCase _advanceCropPhaseUseCase;
+  final FinishCropUseCase _finishCropUseCase;
+
+  ActiveCropViewModel({
+    required this.cropId,
+    required GetActiveCropDataUseCase getActiveCropDataUseCase,
+    required GetMeasurementsForPhaseUseCase getMeasurementsUseCase,
+    required GetControlActionsForPhaseUseCase getControlActionsUseCase,
+    required AdvanceCropPhaseUseCase advanceCropPhaseUseCase,
+    required FinishCropUseCase finishCropUseCase,
+  })  : _getActiveCropDataUseCase = getActiveCropDataUseCase,
+        _getMeasurementsUseCase = getMeasurementsUseCase,
+        _getControlActionsUseCase = getControlActionsUseCase,
+        _advanceCropPhaseUseCase = advanceCropPhaseUseCase,
+        _finishCropUseCase = finishCropUseCase {
+    _loadInitialCropStructure();
+  }
+
+  bool _isScreenLoading = true;
+  bool get isScreenLoading => _isScreenLoading;
+  String? _error;
+  String? get error => _error;
+
+  bool _isPhaseDataLoading = false;
+  bool get isPhaseDataLoading => _isPhaseDataLoading;
+  String? _phaseDataError;
+  String? get phaseDataError => _phaseDataError;
+
+  Crop? _crop;
+  final Map<int, List<Measurement>> _measurementsCache = {};
+  final Map<int, List<ControlAction>> _actionsCache = {};
+
+  int _selectedSectionIndex = 0;
+  int get selectedSectionIndex => _selectedSectionIndex;
+  int _selectedPhaseIndex = 0;
+
+  CropPhase? get selectedPhase {
+    final crop = _crop;
+    if (crop == null || crop.phases.length <= _selectedPhaseIndex) {
+      return null;
     }
+    return crop.phases[_selectedPhaseIndex];
   }
 
-  Map<Parameter, List<Measurement>> _groupMeasurementsByParameter(
-      List<Measurement> measurements) {
-    final Map<Parameter, List<Measurement>> groupedData = {};
-    for (var measurement in measurements) {
-      final parameterEnum = ParameterInfo.fromKey(measurement.parameter);
-      if (!groupedData.containsKey(parameterEnum)) {
-        groupedData[parameterEnum] = [];
-      }
-      groupedData[parameterEnum]!.add(measurement);
-    }
-    groupedData.forEach((key, value) {
-      value.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    });
-    return groupedData;
-  }
+  List<Measurement> get _measurementsForSelectedPhase =>
+      _measurementsCache[selectedPhase?.id] ?? [];
+  List<ControlAction> get _actionsForSelectedPhase =>
+      _actionsCache[selectedPhase?.id] ?? [];
 
-  Future<void> refreshMeasurements() async {
-    await _loadMeasurements();
-  }
+  Map<Parameter, List<Measurement>> get measurementsByParameter =>
+      _PhaseDataProcessor.groupMeasurements(_measurementsForSelectedPhase);
+  Map<Actuator, ControlAction?> get latestActuatorStates =>
+      _PhaseDataProcessor.getLatestActuatorStates(_actionsForSelectedPhase);
+  Map<String, List<ControlAction>> get actionsGroupedByDate =>
+      _PhaseDataProcessor.groupActionsByDate(_actionsForSelectedPhase);
 
-  void selectSection(int index) {
-    if (_selectedSectionIndex != index) {
-      _selectedSectionIndex = index;
-      notifyListeners();
-    }
-  }
+  bool get canGoBack => _selectedPhaseIndex > 0;
+  bool get canGoForward =>
+      _crop != null && _selectedPhaseIndex < _crop!.phases.length - 1;
+  bool get isCurrentActivePhase => _crop?.currentPhase?.id == selectedPhase?.id;
+  bool get isLastPhase =>
+      _crop != null && _selectedPhaseIndex == _crop!.phases.length - 1;
 
-  Future<void> refreshData() async {
-    await loadInitialData();
-  }
-
-  Future<void> loadInitialData() async {
-    _isLoadingCrop = true;
+  Future<void> _loadInitialCropStructure() async {
+    _isScreenLoading = true;
     _error = null;
     notifyListeners();
     try {
-      _crop = await _cropService.getCropById(cropId);
-      if (_crop!.currentPhase != null) {
+      final data = await _getActiveCropDataUseCase(cropId);
+      // CORRECCIÓN: Asignar las propiedades del DTO a las variables correctas.
+      _crop = data.crop;
+
+      final currentPhaseId = _crop?.currentPhase?.id;
+      if (currentPhaseId != null) {
         _selectedPhaseIndex =
-            _crop!.phases.indexWhere((p) => p.id == _crop!.currentPhase!.id);
+            _crop!.phases.indexWhere((p) => p.id == currentPhaseId);
         if (_selectedPhaseIndex == -1) _selectedPhaseIndex = 0;
-      } else {
-        _selectedPhaseIndex = 0;
       }
       await _loadDataForSelectedPhase();
     } catch (e) {
       _error = 'Error al cargar el cultivo: $e';
     } finally {
-      _isLoadingCrop = false;
+      _isScreenLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> _loadDataForSelectedPhase() async {
     final phaseId = selectedPhase?.id;
-    if (phaseId == null) return;
-
-    _isLoadingMeasurements = true;
-    _isLoadingActions = true;
+    if (phaseId == null || _measurementsCache.containsKey(phaseId)) {
+      return;
+    }
+    _isPhaseDataLoading = true;
+    _phaseDataError = null;
     notifyListeners();
-
     try {
-      final futureMeasurements =
-          _measurementService.getMeasurementsByPhaseId(phaseId);
-      final futureActions =
-          _controlActionService.getControlActionsByPhaseId(phaseId);
+      final results = await Future.wait([
+        _getMeasurementsUseCase(phaseId),
+        _getControlActionsUseCase(phaseId),
+      ]);
 
-      final results = await Future.wait([futureMeasurements, futureActions]);
-
-      final measurements = results[0] as List<Measurement>;
-      final actions = results[1] as List<ControlAction>;
-
-      _measurementsByParameter = _groupMeasurementsByParameter(measurements);
-      _controlActions = actions;
-      _controlActions.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      _measurementsCache[phaseId] = results[0] as List<Measurement>;
+      _actionsCache[phaseId] = results[1] as List<ControlAction>;
     } catch (e) {
-      _error = 'Error al cargar datos de la fase: $e';
+      _phaseDataError = 'Error al cargar datos de la fase: $e';
     } finally {
-      _isLoadingMeasurements = false;
-      _isLoadingActions = false;
+      _isPhaseDataLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> advancePhase() async {
+    _isScreenLoading = true;
+    notifyListeners();
+    try {
+      await _advanceCropPhaseUseCase(cropId);
+      _measurementsCache.clear();
+      _actionsCache.clear();
+      await _loadInitialCropStructure();
+    } catch (e) {
+      _error = 'Error al avanzar de fase: $e';
+    } finally {
+      _isScreenLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> finishCrop(double totalProduction) async {
+    _isScreenLoading = true;
+    notifyListeners();
+    try {
+      await _finishCropUseCase(
+          FinishCropParams(cropId: cropId, totalProduction: totalProduction));
+      return true;
+    } catch (e) {
+      _error = 'Error al finalizar el cultivo: $e';
+      _isScreenLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void selectSection(int index) {
+    if (_selectedSectionIndex != index) {
+      _selectedSectionIndex = index;
       notifyListeners();
     }
   }
@@ -255,39 +238,6 @@ class ActiveCropViewModel extends ChangeNotifier {
       _selectedPhaseIndex--;
       _loadDataForSelectedPhase();
       notifyListeners();
-    }
-  }
-
-  Future<void> advancePhase() async {
-    _isLoadingCrop = true;
-    notifyListeners();
-    try {
-      await _cropService.advanceCropPhase(cropId);
-
-      await loadInitialData();
-    } catch (e) {
-      _error = "Error al finalizar la fase: $e";
-    } finally {
-      _isLoadingCrop = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> finishCrop(double totalProduction) async {
-    _isLoadingCrop = true;
-    notifyListeners();
-    try {
-      await _cropService.finishCrop(cropId, totalProduction);
-
-      _isLoadingCrop = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = "Error al finalizar el cultivo: $e";
-      _isLoadingCrop = false;
-      notifyListeners();
-
-      return false;
     }
   }
 }

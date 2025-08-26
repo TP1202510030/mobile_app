@@ -1,49 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/crop_service.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/grow_room_service.dart';
-import 'package:mobile_app/domain/models/grow_room/crop.dart';
-import 'package:mobile_app/domain/models/grow_room/grow_room.dart';
+import 'package:mobile_app/domain/entities/crop/crop.dart';
+import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_by_grow_room_id_use_case.dart';
 
 class FinishedCropsViewModel extends ChangeNotifier {
   final int growRoomId;
-  final CropService _cropService;
-  final GrowRoomService _growRoomService;
+  final GetFinishedCropsDataUseCase _getFinishedCropsDataUseCase;
 
-  List<Crop> _finishedCrops = [];
+  FinishedCropsViewModel({
+    required this.growRoomId,
+    required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
+  }) : _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase {
+    fetchAllData();
+  }
+
+  List<Crop> _allFinishedCrops = [];
   bool _isLoading = true;
   String? _error;
   String _growRoomName = '';
   String _searchQuery = '';
-
   final TextEditingController searchController = TextEditingController();
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get growRoomName => _growRoomName;
+  String get searchQuery => _searchQuery;
 
   List<Crop> get finishedCrops {
     if (_searchQuery.isEmpty) {
-      return _finishedCrops;
+      return _allFinishedCrops;
     }
-    return _finishedCrops
+    return _allFinishedCrops
         .where(
             (crop) => crop.id.toString().contains(_searchQuery.toLowerCase()))
         .toList();
   }
 
-  FinishedCropsViewModel({
-    required this.growRoomId,
-    required CropService cropService,
-    required GrowRoomService growRoomService,
-  })  : _cropService = cropService,
-        _growRoomService = growRoomService {
-    fetchAllData();
-  }
+  Future<void> fetchAllData() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
-  @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
+    try {
+      final data = await _getFinishedCropsDataUseCase(growRoomId);
+      _allFinishedCrops = data.finishedCrops;
+      _growRoomName = data.growRoomName;
+    } catch (e) {
+      _error = 'Ocurrió un error al cargar los datos: ${e.toString()}';
+      _allFinishedCrops = [];
+      _growRoomName = '';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   void setSearchQuery(String query) {
@@ -53,38 +61,9 @@ class FinishedCropsViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchAllData() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final results = await Future.wait([
-        _cropService.getCropsByGrowRoomId(growRoomId),
-        _growRoomService.getGrowRoomsByCompanyId(1),
-      ]);
-
-      final allCrops = results[0] as List<Crop>;
-      final allGrowRooms = results[1] as List<GrowRoom>;
-
-      _finishedCrops = allCrops.where((crop) => crop.endDate != null).toList();
-
-      try {
-        final growRoom =
-            allGrowRooms.firstWhere((room) => room.id == growRoomId);
-        _growRoomName = growRoom.name;
-      } catch (e) {
-        _growRoomName = 'Nave Desconocida';
-        debugPrint('Error: No se encontró la nave con id $growRoomId. $e');
-      }
-    } catch (e) {
-      debugPrint('Error fetching finished crops data: $e');
-      _error = 'Ocurrió un error al cargar los datos.';
-      _finishedCrops = [];
-      _growRoomName = '';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 }

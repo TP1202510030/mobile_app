@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/data/repositories/auth_repository.dart';
+import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
+import 'package:mobile_app/core/exceptions/api_exception.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final AuthRepository _authRepository;
+  final SignInUseCase _signInUseCase;
 
-  LoginViewModel(this._authRepository);
+  LoginViewModel(this._signInUseCase);
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -24,19 +25,25 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future<void> signIn() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
+    _setLoading(true);
     try {
-      await _authRepository.signIn(
-          emailController.text, passwordController.text);
+      await _signInUseCase(SignInParams(
+        username: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      ));
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
     } catch (e) {
-      _errorMessage = 'Usuario o contraseña incorrectos. Inténtalo de nuevo.';
+      _errorMessage = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
     }
+  }
+
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    if (loading) _errorMessage = null;
+    notifyListeners();
   }
 
   @override

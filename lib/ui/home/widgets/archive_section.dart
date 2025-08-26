@@ -17,7 +17,9 @@ class ArchiveSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (viewModel.growRooms.isEmpty) {
+    final rooms = viewModel.growRooms;
+
+    if (rooms.isEmpty) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -40,15 +42,16 @@ class ArchiveSection extends StatelessWidget {
     }
 
     return GridView.builder(
+      padding: const EdgeInsets.all(4),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: _gridCrossAxisCount,
         childAspectRatio: _cardAspectRatio,
         crossAxisSpacing: _gridSpacing,
         mainAxisSpacing: _gridSpacing,
       ),
-      itemCount: viewModel.growRooms.length,
+      itemCount: rooms.length,
       itemBuilder: (context, index) {
-        final room = viewModel.growRooms[index];
+        final room = rooms[index];
         return ArchiveGrowRoomCard(
           name: room.name,
           imageUrl: room.imageUrl,

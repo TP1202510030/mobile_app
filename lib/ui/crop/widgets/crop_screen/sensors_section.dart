@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:mobile_app/domain/models/grow_room/parameter.dart';
+import 'package:mobile_app/domain/entities/measurement/parameter.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
@@ -21,24 +21,18 @@ class _SensorsSectionState extends State<SensorsSection> {
   final Map<Parameter, TooltipBehavior> _tooltipBehaviors = {};
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.viewModel,
       builder: (context, child) {
-        if (widget.viewModel.isLoadingMeasurements &&
-            widget.viewModel.measurementsByParameter.isEmpty) {
+        if (widget.viewModel.isPhaseDataLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (widget.viewModel.measurementError != null) {
+        if (widget.viewModel.phaseDataError != null) {
           return Center(
             child: Text(
-              'Error: ${widget.viewModel.measurementError}',
+              'Error: ${widget.viewModel.phaseDataError}',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -48,45 +42,32 @@ class _SensorsSectionState extends State<SensorsSection> {
           );
         }
 
-        return RefreshIndicator(
-          onRefresh: widget.viewModel.refreshData,
-          child: _buildContent(context),
-        );
+        return _buildContent(context);
       },
     );
   }
 
   Widget _buildContent(BuildContext context) {
     if (widget.viewModel.measurementsByParameter.isEmpty) {
-      return Stack(
-        children: [
-          ListView(),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset(
-                  AppIcons.sensor,
-                  width: 64.0,
-                  height: 64.0,
-                  colorFilter: ColorFilter.mode(
-                    Theme.of(context).colorScheme.onSurface,
-                    BlendMode.srcIn,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'No hay mediciones para mostrar',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              AppIcons.sensor,
+              width: 64.0,
+              height: 64.0,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'No hay mediciones para mostrar en esta fase',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ),
       );
     }
 
-    // Lógica para los tooltips y paneles
     for (var param in widget.viewModel.measurementsByParameter.keys) {
       _tooltipBehaviors.putIfAbsent(param, () => TooltipBehavior(enable: true));
     }
@@ -129,12 +110,11 @@ class _SensorsSectionState extends State<SensorsSection> {
                 if (measurementsList.isEmpty) return const SizedBox.shrink();
                 final latestMeasurement = measurementsList.last;
                 final parameterEnum =
-                    ParameterInfo.fromKey(latestMeasurement.parameter);
+                    ParameterData.fromKey(latestMeasurement.parameter);
                 return ParameterIcon(
                   iconPath: parameterEnum.iconPath,
                   value: latestMeasurement.value,
                   unitOfMeasure: latestMeasurement.unitOfMeasurement,
-                  
                 );
               }).toList(),
             ),

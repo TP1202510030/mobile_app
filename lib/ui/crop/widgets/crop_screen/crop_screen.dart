@@ -126,6 +126,8 @@ class CropScreen extends StatelessWidget {
                   final bool success = await viewModel.finishCrop(production);
 
                   if (success && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Cultivo finalizado con éxito.')));
                     context.go(Routes.home);
                   }
                 }
@@ -145,7 +147,7 @@ class CropScreen extends StatelessWidget {
       child: ListenableBuilder(
         listenable: viewModel,
         builder: (context, child) {
-          if (viewModel.isLoading) {
+          if (viewModel.isScreenLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           if (viewModel.error != null) {
@@ -184,8 +186,7 @@ class CropScreen extends StatelessWidget {
           onPressed: viewModel.canGoBack ? viewModel.goToPreviousPhase : null,
         ),
         Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
             children: [
               Text(
                 "Fase: ${viewModel.selectedPhase?.name ?? 'Cargando...'}",
@@ -195,23 +196,31 @@ class CropScreen extends StatelessWidget {
             ],
           ),
         ),
-        if (viewModel.isCurrentActivePhase)
+        if (viewModel.isCurrentActivePhase && viewModel.canGoForward)
           SizedBox(
             width: 150,
             child: CustomButton(
               onTap: () {
-                if (viewModel.isLastPhase) {
-                  _showProductionInputDialog(context);
-                } else {
-                  _showConfirmationDialog(
-                      context,
-                      "Finalizar Fase",
-                      '¿Estás seguro de que deseas avanzar a la siguiente fase?',
-                      viewModel.advancePhase);
-                }
+                _showConfirmationDialog(
+                    context,
+                    "Finalizar Fase",
+                    '¿Estás seguro de que deseas avanzar a la siguiente fase?',
+                    viewModel.advancePhase);
               },
               child: Text(
-                viewModel.isLastPhase ? 'Finalizar Cultivo' : 'Finalizar Fase',
+                'Finalizar Fase',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+              ),
+            ),
+          )
+        else if (viewModel.isCurrentActivePhase && viewModel.isLastPhase)
+          SizedBox(
+            width: 150,
+            child: CustomButton(
+              onTap: () => _showProductionInputDialog(context),
+              child: Text(
+                'Finalizar Cultivo',
                 style:
                     TextStyle(color: Theme.of(context).colorScheme.onPrimary),
               ),

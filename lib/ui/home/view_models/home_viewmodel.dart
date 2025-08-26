@@ -1,24 +1,40 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/grow_room_service.dart';
-import 'package:mobile_app/domain/models/grow_room/grow_room.dart';
+import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
+import 'package:mobile_app/domain/repositories/auth_repository.dart';
+import 'package:mobile_app/domain/use_cases/grow_room/get_grow_rooms_by_company_id_use_case.dart';
+import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 
 class HomeViewModel extends ChangeNotifier {
-  final GrowRoomService _service;
+  final GetGrowRoomsByCompanyIdUseCase _getHomeDataUseCase;
+  final AuthRepository _authRepository;
+  final SignOutUseCase _signOutUseCase;
+
+  HomeViewModel({
+    required GetGrowRoomsByCompanyIdUseCase getHomeDataUseCase,
+    required AuthRepository authRepository,
+    required SignOutUseCase signOutUseCase,
+  })  : _getHomeDataUseCase = getHomeDataUseCase,
+        _authRepository = authRepository,
+        _signOutUseCase = signOutUseCase {
+    fetchGrowRooms();
+  }
+
+  // --- Estado Interno ---
   List<GrowRoom> _growRooms = [];
   int _selectedTabIndex = 0;
   bool _isLoading = false;
+  String? _error;
   String _searchQuery = '';
-
-  HomeViewModel(this._service) {
-    fetchGrowRooms(1); // Example companyId, replace with actual
-  }
-
   final TextEditingController searchController = TextEditingController();
 
-  List<GrowRoom> get growRooms => _filteredGrowRooms;
-  String get searchQuery => _searchQuery;
+  // --- Getters Públicos ---
   int get selectedTabIndex => _selectedTabIndex;
   bool get isLoading => _isLoading;
+  String? get error => _error;
+  String get searchQuery => _searchQuery;
+  List<GrowRoom> get growRooms => _filteredGrowRooms;
 
   bool hasNotification = false;
   VoidCallback? onNotificationTap;
@@ -38,15 +54,22 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchGrowRooms(int companyId) async {
+  Future<void> fetchGrowRooms() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
     try {
-      _growRooms = await _service.getGrowRoomsByCompanyId(companyId);
-      debugPrint(
-          'Fetched grow rooms: ${_growRooms.map((room) => room.name).join(', ')}');
+      final companyId = _authRepository.companyId;
+      if (companyId == null) {
+        throw Exception(
+            'ID de compañía no encontrado. Por favor, inicie sesión de nuevo.');
+      }
+
+      _growRooms = await _getHomeDataUseCase(
+          GetGrowRoomsByCompanyIdParams(companyId: companyId));
     } catch (e) {
-      debugPrint('Error fetching grow rooms: $e');
+      _error = 'Error al cargar las naves: ${e.toString()}';
+      developer.log(_error ?? 'Error desconocido al cargar las naves');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -54,7 +77,7 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshGrowRooms() async {
-    await fetchGrowRooms(1); // Example companyId, replace with actual
+    await fetchGrowRooms();
   }
 
   void selectTab(int index) {
@@ -64,6 +87,10 @@ class HomeViewModel extends ChangeNotifier {
       setSearchQuery('');
       notifyListeners();
     }
+  }
+
+  Future<void> signOut() async {
+    await _signOutUseCase(null);
   }
 
   @override

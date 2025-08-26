@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/domain/models/grow_room/crop.dart';
+import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/search_bar.dart';
@@ -26,19 +26,31 @@ class FinishedCropsScreen extends StatelessWidget {
           return Center(child: Text(viewModel.error!));
         }
 
+        final crops = viewModel.finishedCrops;
+
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                viewModel.growRoomName,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(viewModel.growRoomName,
+                  style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 16),
-              _SearchBarSection(viewModel: viewModel),
+              CustomSearchBar(
+                controller: viewModel.searchController,
+                hintText: 'Buscar por ID de cultivo...',
+                onChanged: viewModel.setSearchQuery,
+                onClear: () => viewModel.setSearchQuery(''),
+              ),
               const SizedBox(height: 24),
-              if (viewModel.finishedCrops.isEmpty)
+              if (crops.isEmpty && viewModel.searchQuery.isNotEmpty)
+                Expanded(
+                  child: Center(
+                    child: Text(
+                        'No se encontró el cultivo "${viewModel.searchQuery}"'),
+                  ),
+                )
+              else if (crops.isEmpty)
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -53,22 +65,18 @@ class FinishedCropsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        'No hay cultivos finalizados para mostrar',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
+                      Text('No hay cultivos finalizados',
+                          style: Theme.of(context).textTheme.bodyLarge),
                     ],
                   ),
                 )
               else
                 Expanded(
                   child: ListView.separated(
-                    itemCount: viewModel.finishedCrops.length,
+                    itemCount: crops.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) {
-                      final crop = viewModel.finishedCrops[index];
-                      return _FinishedCropCard(crop: crop);
-                    },
+                    itemBuilder: (context, index) =>
+                        _FinishedCropCard(crop: crops[index]),
                   ),
                 ),
             ],
@@ -79,83 +87,44 @@ class FinishedCropsScreen extends StatelessWidget {
   }
 }
 
-class _SearchBarSection extends StatelessWidget {
-  final FinishedCropsViewModel viewModel;
-
-  const _SearchBarSection({required this.viewModel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: CustomSearchBar(
-            controller: viewModel.searchController,
-            hintText: 'Buscar cultivo...',
-            onChanged: viewModel.setSearchQuery,
-            onClear: () => viewModel.setSearchQuery(''),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _FinishedCropCard extends StatelessWidget {
   final Crop crop;
-
   const _FinishedCropCard({required this.crop});
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
-    final startDate = dateFormat.format(crop.startDate);
-    final endDate =
-        crop.endDate != null ? dateFormat.format(crop.endDate!) : 'N/A';
-
-    final totalProduction = crop.totalProduction != null
-        ? '${crop.totalProduction!.toStringAsFixed(2)} T'
+    final dateFormat = DateFormat('dd/MM/yyyy', 'es_ES');
+    final startDate = dateFormat.format(crop.startDate.toLocal());
+    final endDate = crop.endDate != null
+        ? dateFormat.format(crop.endDate!.toLocal())
         : 'N/A';
+    final totalProduction = crop.totalProduction?.toStringAsFixed(2) ?? 'N/A';
 
     return InkWell(
       onTap: () {
-        final path = Routes.finishedCropDetail
-            .replaceAll(':growRoomId', crop.growRoomId.toString())
-            .replaceAll(
-              ':cropId',
-              crop.id.toString(),
-            );
+        final path =
+            Routes.finishedCropDetail.replaceAll(':cropId', crop.id.toString());
         context.push(path, extra: totalProduction);
       },
       borderRadius: BorderRadius.circular(12.0),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.onPrimary,
           borderRadius: BorderRadius.circular(12.0),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outline,
-          ),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Cultivo #${crop.id}',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
+            Text('Cultivo #${crop.id}',
+                style: Theme.of(context).textTheme.bodyLarge),
             const SizedBox(height: 16),
             _CardInfoRow(
-              svgIconPath: AppIcons.calendar,
-              text: '$startDate - $endDate',
-            ),
+                iconPath: AppIcons.calendar, text: '$startDate - $endDate'),
             const SizedBox(height: 8),
             _CardInfoRow(
-              svgIconPath: AppIcons.mushroom,
-              text: 'Producción total: $totalProduction',
-            ),
+                iconPath: AppIcons.mushroom,
+                text: 'Producción total: $totalProduction Tn'),
           ],
         ),
       ),
@@ -164,27 +133,15 @@ class _FinishedCropCard extends StatelessWidget {
 }
 
 class _CardInfoRow extends StatelessWidget {
-  final String? svgIconPath;
+  final String iconPath;
   final String text;
-
-  const _CardInfoRow({
-    this.svgIconPath,
-    required this.text,
-  }) : assert(svgIconPath != null, 'Se debe proveer un svgIconPath.');
+  const _CardInfoRow({required this.iconPath, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SvgPicture.asset(
-          svgIconPath!,
-          width: 32,
-          height: 32,
-          colorFilter: ColorFilter.mode(
-            Theme.of(context).colorScheme.onSurface,
-            BlendMode.srcIn,
-          ),
-        ),
+        SvgPicture.asset(iconPath, width: 24, height: 24),
         const SizedBox(width: 12),
         Expanded(
           child: Text(

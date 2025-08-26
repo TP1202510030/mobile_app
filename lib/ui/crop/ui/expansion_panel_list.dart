@@ -36,23 +36,15 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList> {
         children: [
           InkWell(
             onTap: () {
-              // ✅ INICIO DE LA SOLUCIÓN DEFINITIVA
-              // 1. Ocultamos el tooltip inmediatamente.
               item.tooltipBehavior.hide();
 
-              // 2. Esperamos un instante (50 milisegundos) antes de cambiar el estado.
-              // Esto le da tiempo al framework para procesar la desaparición del tooltip
-              // antes de que comience la animación de colapso.
               Future.delayed(const Duration(milliseconds: 50), () {
-                // Es una buena práctica verificar si el widget sigue "montado"
-                // antes de llamar a setState en un callback asíncrono.
                 if (mounted) {
                   setState(() {
                     item.isExpanded = !item.isExpanded;
                   });
                 }
               });
-              // ✅ FIN DE LA SOLUCIÓN DEFINITIVA
             },
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -75,6 +67,10 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList> {
                     item.iconPath,
                     width: AppSizes.blockSizeHorizontal * 6,
                     height: AppSizes.blockSizeHorizontal * 6,
+                    colorFilter: ColorFilter.mode(
+                      headerTextColor,
+                      BlendMode.srcIn,
+                    ),
                   ),
                   SizedBox(width: AppSizes.blockSizeHorizontal * 4),
                   Expanded(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/domain/models/grow_room/measurement.dart';
+import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 
 class LineChart extends StatelessWidget {
   final String parameterName;

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:mobile_app/domain/models/grow_room/parameter.dart';
-import 'package:mobile_app/routing/routes.dart';
-import 'package:mobile_app/ui/core/ui/actuator_icon.dart';
-import 'package:mobile_app/utils/icon_utils.dart';
-import '../../core/ui/search_bar.dart';
-import '../ui/grow_room_card.dart';
-import '../view_models/home_viewmodel.dart';
-import '../../core/ui/parameter_icon.dart';
-import '../../core/themes/icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_app/domain/entities/control_action/actuator.dart';
+import 'package:mobile_app/domain/entities/measurement/parameter.dart';
+import 'package:mobile_app/routing/routes.dart';
+import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/actuator_icon.dart';
+import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
+import 'package:mobile_app/ui/core/ui/search_bar.dart';
+import 'package:mobile_app/ui/home/ui/grow_room_card.dart';
+import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
 class GrowRoomSection extends StatelessWidget {
   final HomeViewModel viewModel;
@@ -68,7 +68,7 @@ class GrowRoomSection extends StatelessWidget {
               }
 
               return RefreshIndicator(
-                onRefresh: viewModel.refreshGrowRooms,
+                onRefresh: viewModel.fetchGrowRooms,
                 child: ListView.separated(
                   itemCount: rooms.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -76,7 +76,7 @@ class GrowRoomSection extends StatelessWidget {
                     final room = rooms[index];
 
                     final params = room.latestMeasurements.map((m) {
-                      final parameterEnum = ParameterInfo.fromKey(m.parameter);
+                      final parameterEnum = ParameterData.fromKey(m.parameter);
                       return ParameterIcon(
                         iconPath: parameterEnum.iconPath,
                         value: m.value,
@@ -85,25 +85,22 @@ class GrowRoomSection extends StatelessWidget {
                     }).toList();
 
                     final actuators = room.actuatorStates.entries.map((entry) {
-                      final actuatorName = entry.key;
-                      final actuatorState = entry.value;
-
+                      final actuatorEnum = ActuatorData.fromKey(entry.key);
                       return ActuatorIcon(
-                        iconPath: IconUtils.getIconForActuator(actuatorName),
-                        isActive: actuatorState == 'ACTIVATED',
+                        iconPath: actuatorEnum.iconPath,
+                        isActive: entry.value == 'ACTIVATED',
                       );
                     }).toList();
-
-                    final bool canNavigateToCrop = room.hasActiveCrop;
 
                     return GrowRoomCard(
                       title: room.name,
                       imagePath: room.imageUrl,
                       parameters: params,
                       actuators: actuators,
-                      onTap: canNavigateToCrop
+                      onTap: room.hasActiveCrop
                           ? () => context.push(
-                                '/crop/${room.activeCropId}',
+                                Routes.crop.replaceAll(
+                                    ':cropId', room.activeCropId.toString()),
                                 extra: room.name,
                               )
                           : null,

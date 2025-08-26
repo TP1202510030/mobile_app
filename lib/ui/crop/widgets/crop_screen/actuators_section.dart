@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
-import 'package:mobile_app/domain/models/grow_room/actuator.dart';
-import 'package:mobile_app/domain/models/grow_room/control_action.dart';
+import 'package:mobile_app/domain/entities/control_action/actuator.dart';
+import 'package:mobile_app/domain/entities/control_action/control_action.dart';
+import 'package:mobile_app/ui/core/themes/colors.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 
@@ -15,57 +16,53 @@ class ActuatorsSection extends StatelessWidget {
     return ListenableBuilder(
       listenable: viewModel,
       builder: (context, child) {
-        if (viewModel.isLoadingActions && viewModel.controlActions.isEmpty) {
+        if (viewModel.isPhaseDataLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (viewModel.actionsError != null) {
-          return Center(child: Text(viewModel.actionsError!));
+        if (viewModel.phaseDataError != null) {
+          return Center(child: Text(viewModel.phaseDataError!));
         }
 
-        return RefreshIndicator(
-          onRefresh: viewModel.refreshData,
-          child: _buildContent(context),
-        );
+        return _buildContent(context);
       },
     );
   }
 
   Widget _buildContent(BuildContext context) {
-    if (viewModel.controlActions.isEmpty) {
-      return Stack(
-        children: [
-          ListView(),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SvgPicture.asset(
-                  AppIcons.actuator,
-                  width: 64.0,
-                  height: 64.0,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'No hay acciones de control para mostrar',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
+    if (viewModel.actionsGroupedByDate.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              AppIcons.actuator,
+              width: 64.0,
+              height: 64.0,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              'No hay acciones de control para mostrar en esta fase',
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       );
     }
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CurrentStatusSection(viewModel: viewModel),
-          const SizedBox(height: 24),
-          _HistorySection(viewModel: viewModel),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          children: [
+            _CurrentStatusSection(viewModel: viewModel),
+            const SizedBox(height: 24),
+            _HistorySection(viewModel: viewModel),
+          ],
+        ),
       ),
     );
   }
@@ -81,18 +78,16 @@ class _CurrentStatusSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Control automático',
+          'Estado Actual',
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 16),
         Divider(
           height: 1,
           thickness: 1,
-          indent: 16,
-          endIndent: 16,
           color: Theme.of(context).colorScheme.outline,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: viewModel.latestActuatorStates.entries.map((entry) {
@@ -117,16 +112,15 @@ class _ActuatorStatusWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isActive = latestAction?.controlActionType == 'ACTIVATED';
     final statusText = isActive ? 'On' : 'Off';
-    final statusColor = isActive
-        ? Colors.green.shade600
-        : Theme.of(context).colorScheme.secondary;
+    final statusColor =
+        isActive ? AppColors.accent : Theme.of(context).colorScheme.secondary;
 
     return Column(
       children: [
         SvgPicture.asset(
           actuator.iconPath,
-          width: 40,
-          height: 40,
+          width: 60,
+          height: 60,
           colorFilter: ColorFilter.mode(
             statusColor,
             BlendMode.srcIn,
@@ -153,7 +147,7 @@ class _HistorySection extends StatelessWidget {
 
   String _buildHistoryDescription(ControlAction action) {
     final actuatorLabel =
-        ActuatorInfo.fromKey(action.actuatorType).label.toLowerCase();
+        ActuatorData.fromKey(action.actuatorType).label.toLowerCase();
     final actionType = action.controlActionType == 'ACTIVATED'
         ? 'Se activó el sistema de'
         : 'Se desactivó el sistema de';
@@ -173,10 +167,9 @@ class _HistorySection extends StatelessWidget {
         Divider(
           height: 1,
           thickness: 1,
-          indent: 16,
-          endIndent: 16,
           color: Theme.of(context).colorScheme.outline,
         ),
+        const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -206,8 +199,8 @@ class _HistorySection extends StatelessWidget {
                           ? Icons.play_circle_fill_outlined
                           : Icons.pause_circle_outline,
                       color: action.controlActionType == 'ACTIVATED'
-                          ? Colors.green
-                          : Colors.red,
+                          ? AppColors.accent
+                          : Theme.of(context).colorScheme.secondary,
                     ),
                     title: Text(_buildHistoryDescription(action),
                         style: Theme.of(context).textTheme.bodyMedium),

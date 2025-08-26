@@ -1,14 +1,25 @@
 import 'package:flutter/material.dart';
-// No se necesita 'package:collection/collection.dart'
-import 'package:mobile_app/data/services/api/model/grow_room/crop_service.dart';
-import 'package:mobile_app/domain/models/grow_room/crop.dart';
-import 'package:mobile_app/domain/models/grow_room/measurement.dart';
+import 'package:mobile_app/domain/entities/crop/crop.dart';
+import 'package:mobile_app/domain/entities/measurement/measurement.dart';
+import 'package:mobile_app/domain/use_cases/crop/get_finished_crop_details_use_case.dart';
 
+/// ViewModel para la pantalla de detalles de un cultivo finalizado.
+///
+/// Utiliza [GetFinishedCropDetailsUseCase] para obtener toda la información histórica
+/// del cultivo y la procesa para ser mostrada en la UI.
 class FinishedCropDetailViewModel extends ChangeNotifier {
   final int cropId;
-  final CropService _cropService;
+  final GetFinishedCropDetailsUseCase _getFinishedCropDetailsUseCase;
+
+  FinishedCropDetailViewModel({
+    required this.cropId,
+    required GetFinishedCropDetailsUseCase getFinishedCropDetailsUseCase,
+  }) : _getFinishedCropDetailsUseCase = getFinishedCropDetailsUseCase {
+    fetchCropHistory();
+  }
 
   Crop? _crop;
+  List<Measurement> _allMeasurements = [];
   bool _isLoading = true;
   String? _error;
 
@@ -17,29 +28,15 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
   String? get error => _error;
 
   Map<DateTime, List<Measurement>> get measurementsByDate {
-    if (_crop == null) return {};
-
-    final allMeasurements =
-        _crop!.phases.expand((phase) => phase.measurements).toList();
+    if (_allMeasurements.isEmpty) return {};
 
     final Map<DateTime, List<Measurement>> groupedMap = {};
-
-    for (final measurement in allMeasurements) {
-      final dateKey = DateTime(
-        measurement.timestamp.year,
-        measurement.timestamp.month,
-        measurement.timestamp.day,
-      );
-      groupedMap.putIfAbsent(dateKey, () => []).add(measurement);
+    for (final measurement in _allMeasurements) {
+      final dateKey = DateUtils.dateOnly(measurement.timestamp.toLocal());
+      (groupedMap[dateKey] ??= []).add(measurement);
     }
 
     return groupedMap;
-  }
-
-  FinishedCropDetailViewModel(
-      {required this.cropId, required CropService cropService})
-      : _cropService = cropService {
-    fetchCropHistory();
   }
 
   Future<void> fetchCropHistory() async {
@@ -48,10 +45,11 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _crop = await _cropService.getCropById(cropId);
+      final data = await _getFinishedCropDetailsUseCase(cropId);
+      _crop = data.crop;
+      _allMeasurements = data.allMeasurements;
     } catch (e) {
-      debugPrint('Error fetching crop history: $e');
-      _error = 'Ocurrió un error al cargar el historial.';
+      _error = 'Ocurrió un error al cargar el historial: ${e.toString()}';
     } finally {
       _isLoading = false;
       notifyListeners();

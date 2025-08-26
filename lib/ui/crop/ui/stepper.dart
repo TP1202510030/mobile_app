@@ -39,7 +39,7 @@ class _CustomStepperState extends State<CustomStepper> {
                           : Theme.of(context).colorScheme.outline;
 
                   return Container(
-                    height: 12.0,
+                    height: 5.0,
                     decoration: BoxDecoration(
                       color: targetColor,
                       borderRadius: BorderRadius.circular(12.0),

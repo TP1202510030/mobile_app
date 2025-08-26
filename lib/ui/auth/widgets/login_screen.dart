@@ -39,8 +39,8 @@ class LoginScreen extends StatelessWidget {
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.75,
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                 ),
                 child: Padding(
