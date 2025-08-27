@@ -30,11 +30,7 @@ import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phas
 import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:mobile_app/ui/auth/viewmodel/login_viewmodel.dart';
-import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
-import 'package:mobile_app/ui/crop/view_models/create_crop_viewmodel.dart';
-import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
-import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
-import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 final GetIt locator = GetIt.instance;
@@ -104,34 +100,4 @@ Future<void> setupLocator() async {
 
   // --- FACTORIES (ViewModels) ---
   locator.registerFactory(() => LoginViewModel(locator()));
-  locator.registerFactory(() => HomeViewModel(
-        getHomeDataUseCase: locator(),
-        authRepository: locator(),
-        signOutUseCase: locator(),
-      ));
-
-  locator.registerFactoryParam<CreateCropViewModel, int, void>(
-      (growRoomId, _) => CreateCropViewModel(growRoomId, locator()));
-
-  locator.registerFactoryParam<ActiveCropViewModel, int, void>(
-      (cropId, _) => ActiveCropViewModel(
-            cropId: cropId,
-            getActiveCropDataUseCase: locator(),
-            getMeasurementsUseCase: locator(),
-            getControlActionsUseCase: locator(),
-            advanceCropPhaseUseCase: locator(),
-            finishCropUseCase: locator(),
-          ));
-
-  locator.registerFactoryParam<FinishedCropsViewModel, int, void>(
-      (growRoomId, _) => FinishedCropsViewModel(
-            growRoomId: growRoomId,
-            getFinishedCropsDataUseCase: locator(),
-          ));
-
-  locator.registerFactoryParam<FinishedCropDetailViewModel, int, void>(
-      (cropId, _) => FinishedCropDetailViewModel(
-            cropId: cropId,
-            getFinishedCropDetailsUseCase: locator(),
-          ));
 }

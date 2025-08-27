@@ -1,55 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
-import 'package:mobile_app/core/exceptions/api_exception.dart';
+import 'package:mobile_app/utils/command.dart';
+import 'package:mobile_app/utils/result.dart';
 
-class LoginViewModel extends ChangeNotifier {
+class LoginViewModel {
   final SignInUseCase _signInUseCase;
 
-  LoginViewModel(this._signInUseCase);
-
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  late final Command<void, SignInParams> signInCommand;
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+  final ValueNotifier<bool> isPasswordVisibleNotifier = ValueNotifier(false);
 
-  bool _isPasswordVisible = false;
-  bool get isPasswordVisible => _isPasswordVisible;
+  final ValueNotifier<bool> isFormValidNotifier = ValueNotifier(false);
 
-  void togglePasswordVisibility() {
-    _isPasswordVisible = !_isPasswordVisible;
-    notifyListeners();
+  LoginViewModel(this._signInUseCase) {
+    signInCommand = Command(_signIn);
+    usernameController.addListener(_validateForm);
+    passwordController.addListener(_validateForm);
   }
 
-  Future<void> signIn() async {
-    _setLoading(true);
-    try {
-      await _signInUseCase(SignInParams(
-        username: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      ));
-    } on ApiException catch (e) {
-      _errorMessage = e.message;
-    } catch (e) {
-      _errorMessage = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
-    } finally {
-      _setLoading(false);
+  Future<Result<void>> _signIn(SignInParams params) {
+    return _signInUseCase(params);
+  }
+
+  void togglePasswordVisibility() {
+    isPasswordVisibleNotifier.value = !isPasswordVisibleNotifier.value;
+  }
+
+  void _validateForm() {
+    final isValid = usernameController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty;
+    if (isFormValidNotifier.value != isValid) {
+      isFormValidNotifier.value = isValid;
     }
   }
 
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    if (loading) _errorMessage = null;
-    notifyListeners();
-  }
-
-  @override
   void dispose() {
-    emailController.dispose();
+    usernameController.removeListener(_validateForm);
+    passwordController.removeListener(_validateForm);
+    usernameController.dispose();
     passwordController.dispose();
-    super.dispose();
+    signInCommand.dispose();
+    isPasswordVisibleNotifier.dispose();
+    isFormValidNotifier.dispose();
   }
 }

@@ -1,5 +1,5 @@
 /// A class that holds screen paths for the entire application.
-abstract final class Routes {
+abstract final class AppRoutes {
   // --- Authentication Routes ---
   static const welcome = '/welcome';
   static const login = '/login';

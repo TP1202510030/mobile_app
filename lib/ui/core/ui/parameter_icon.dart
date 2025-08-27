@@ -1,45 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/domain/entities/measurement/measurement.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
+import 'package:mobile_app/ui/core/utils/parameter_extensions.dart';
 
 class ParameterIcon extends StatelessWidget {
-  final String iconPath;
-  final double value;
-  final String? unitOfMeasure;
+  final Measurement measurement;
+  final double size;
 
   const ParameterIcon({
     super.key,
-    required this.iconPath,
-    required this.value,
-    this.unitOfMeasure,
+    required this.measurement,
+    this.size = AppSizes.iconSizeMedium,
   });
+
+  static final _numberFormatter = NumberFormat('#,##0.##', 'es_ES');
 
   @override
   Widget build(BuildContext context) {
-    final formattedValue = NumberFormat('#,##0.##', 'es_ES').format(value);
+    final onSurfaceColor = Theme.of(context).colorScheme.onSurface;
+    final textStyle =
+        Theme.of(context).textTheme.bodySmall?.copyWith(color: onSurfaceColor);
+    final formattedValue = _numberFormatter.format(measurement.value);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         SizedBox(
-          width: 32.0,
-          height: 32.0,
+          width: size,
+          height: size,
           child: SvgPicture.asset(
-            iconPath,
-            width: 32.0,
-            height: 32.0,
+            measurement.parameter.iconPath,
             colorFilter: ColorFilter.mode(
-              Theme.of(context).colorScheme.onSurface,
+              onSurfaceColor,
               BlendMode.srcIn,
             ),
           ),
         ),
-        const SizedBox(height: 2.0),
+        const SizedBox(height: AppSizes.spacingExtraSmall),
         Text(
-          '$formattedValue${unitOfMeasure != null ? ' $unitOfMeasure' : ''}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+          '$formattedValue${measurement.unitOfMeasurement}',
+          style: textStyle,
         ),
       ],
     );
