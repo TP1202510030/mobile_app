@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/home/ui/grow_room_list.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
@@ -50,34 +51,12 @@ class GrowRoomsSection extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, String searchQuery) {
-    final theme = Theme.of(context);
     final isFiltering = searchQuery.isNotEmpty;
 
     final message = isFiltering
         ? "No se encontró la nave con nombre '$searchQuery'"
         : "No existen naves para mostrar";
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SvgPicture.asset(
-            AppIcons.home,
-            width: AppSizes.iconSizeLarge,
-            height: AppSizes.iconSizeLarge,
-            colorFilter: ColorFilter.mode(
-              theme.colorScheme.onSurfaceVariant,
-              BlendMode.srcIn,
-            ),
-          ),
-          const SizedBox(height: AppSizes.spacingLarge),
-          Text(
-            message,
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    return EmptyState(message: message, iconAsset: AppIcons.home);
   }
 }

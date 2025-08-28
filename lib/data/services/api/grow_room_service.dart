@@ -10,6 +10,8 @@ class GrowRoomService {
 
   GrowRoomService(this._apiClient);
 
+  static const String sortBy = 'name.name,asc';
+
   Future<GrowRoom> getGrowRoomById(int id) async {
     final url = ApiRoutes.growRoomById(id);
     try {
@@ -33,6 +35,7 @@ class GrowRoomService {
           'companyId': companyId,
           'page': page,
           'size': size,
+          'sort': sortBy,
         },
       );
 

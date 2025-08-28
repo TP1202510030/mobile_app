@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/core/locator.dart';
-import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:mobile_app/ui/core/layouts/base_layout.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
@@ -11,25 +11,20 @@ import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 import 'package:mobile_app/ui/home/widgets/archived_crops_section.dart';
 import 'package:mobile_app/ui/home/widgets/grow_rooms_section.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<HomeViewModel>(
+      create: (_) => locator<HomeViewModel>()..fetchInitialGrowRooms(),
+      child: const _HomeView(),
+    );
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  late final HomeViewModel _viewModel;
-  final _signOutUseCase = locator<SignOutUseCase>();
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = locator<HomeViewModel>();
-    if (_viewModel.growRooms.isEmpty) {
-      _viewModel.fetchInitialGrowRooms();
-    }
-  }
+class _HomeView extends StatelessWidget {
+  const _HomeView();
 
   List<OptionItemData> _buildTabOptions() {
     return [
@@ -46,17 +41,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final DateFormat formatter = DateFormat("dd 'de' MMMM, y", 'es');
-    final String formattedDate = formatter.format(DateTime.now());
+    final viewModel = context.watch<HomeViewModel>();
+    final formatter = DateFormat("dd 'de' MMMM, y", 'es');
+    final String today = formatter.format(DateTime.now());
 
     return BaseLayout(
       title: 'Bienvenido a Greenhouse',
       actions: [
         IconButton(
+          tooltip: 'Cerrar sesión',
+          onPressed: viewModel.signOut,
           icon: const Icon(Icons.logout),
-          onPressed: () async {
-            await _signOutUseCase(null);
-          },
         ),
       ],
       child: Padding(
@@ -64,31 +59,41 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Text(
-              formattedDate,
+              today,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: AppSizes.spacingExtraLarge),
             HorizontalOptionList(
               options: _buildTabOptions(),
-              initialIndex: _viewModel.selectedTab.index,
-              onItemSelected: _viewModel.selectTab,
+              initialIndex: viewModel.selectedTab.index,
+              onItemSelected: viewModel.selectTab,
             ),
             const SizedBox(height: AppSizes.spacingExtraLarge),
             CustomSearchBar(
               hintText: 'Buscar nave...',
-              controller: _viewModel.searchController,
+              controller: viewModel.searchController,
               onChanged: (_) {},
             ),
             const SizedBox(height: AppSizes.spacingExtraLarge),
             Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, child) {
-                  switch (_viewModel.selectedTab) {
+              child: Builder(
+                builder: (_) {
+                  if (viewModel.isLoading && viewModel.growRooms.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (viewModel.error != null && viewModel.growRooms.isEmpty) {
+                    return Center(
+                      child: Text(viewModel.error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          )),
+                    );
+                  }
+                  switch (viewModel.selectedTab) {
                     case HomeTab.growRooms:
-                      return GrowRoomsSection(viewModel: _viewModel);
+                      return GrowRoomsSection(viewModel: viewModel);
                     case HomeTab.archive:
-                      return ArchivedCropsSection(viewModel: _viewModel);
+                      return ArchivedCropsSection(viewModel: viewModel);
                   }
                 },
               ),

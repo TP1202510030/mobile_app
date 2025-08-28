@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/core/locator.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
 import 'package:mobile_app/routing/routes.dart';
@@ -8,52 +9,81 @@ import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/images.dart';
 import 'package:mobile_app/ui/core/ui/back_button.dart';
 import 'package:mobile_app/ui/core/ui/button.dart';
+import 'package:mobile_app/core/exceptions/api_exception.dart';
+import 'package:mobile_app/core/exceptions/unauthorized_exception.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  Widget build(BuildContext context) {
+    return Provider<LoginViewModel>(
+      create: (_) => locator<LoginViewModel>(),
+      dispose: (_, viewModel) => viewModel.dispose(),
+      child: const _LoginView(),
+    );
+  }
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginView extends StatefulWidget {
+  const _LoginView();
+
+  @override
+  State<_LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<_LoginView> {
+  final _formKey = GlobalKey<FormState>();
+
+  // 🔒 Guardamos la ref del VM para evitar lookups en dispose
   late final LoginViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
-    _viewModel = locator<LoginViewModel>();
+    _viewModel = context.read<LoginViewModel>();
     _viewModel.signInCommand.addListener(_onSignInResult);
   }
 
   @override
   void dispose() {
     _viewModel.signInCommand.removeListener(_onSignInResult);
-    _viewModel.dispose();
     super.dispose();
   }
 
   void _onSignInResult() {
     if (!mounted) return;
-
-    if (_viewModel.signInCommand.isSuccess) {
+    final signInCommand = _viewModel.signInCommand;
+    if (signInCommand.isSuccess) {
       context.go(AppRoutes.home);
-    } else if (_viewModel.signInCommand.hasError) {
+    } else if (signInCommand.hasError) {
+      final message = _customErrorMessage(signInCommand.error);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_viewModel.signInCommand.error.toString()),
+          content: Text(message),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
-      _viewModel.signInCommand.reset();
     }
   }
 
-  void _performLogin() {
+  String _customErrorMessage(Exception? e) {
+    if (e == null) return 'Ocurrió un error inesperado.';
+    if (e is UnauthorizedException) {
+      return 'Usuario o contraseña incorrectos.';
+    }
+    if (e is ApiException) {
+      return e.message;
+    }
+    return 'No se pudo iniciar sesión. Intenta nuevamente.';
+  }
+
+  void _submit() {
     FocusScope.of(context).unfocus();
+    if (!_formKey.currentState!.validate()) return;
     _viewModel.signInCommand.execute(SignInParams(
       username: _viewModel.usernameController.text.trim(),
-      password: _viewModel.passwordController.text.trim(),
+      password: _viewModel.passwordController.text,
     ));
   }
 
@@ -63,134 +93,162 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: Stack(
         children: [
-          _buildBackgroundHeader(),
-          _buildFormContent(),
+          const _BackgroundHeader(),
+          SafeArea(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppSizes.spacingLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: AppSizes.spacingLarge),
+                  CustomBackButton(
+                    color: Theme.of(context).colorScheme.onSecondary,
+                  ),
+                  const SizedBox(height: 60),
+                  Text(
+                    'Inicia sesión',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: _formKey,
+                        child: AutofillGroup(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 100),
+                              Text(
+                                'Bienvenido a Greenhouse',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: AppSizes.spacingMedium),
+                              Text('Inicia sesión en tu cuenta',
+                                  style: Theme.of(context).textTheme.bodySmall),
+                              const SizedBox(height: AppSizes.spacingLarge * 2),
+                              _UsernameField(viewModel: _viewModel),
+                              const SizedBox(height: AppSizes.spacingLarge),
+                              _PasswordField(viewModel: _viewModel),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _LoginButton(onPressed: _submit),
+                  SizedBox(
+                    height: MediaQuery.of(context).padding.bottom +
+                        AppSizes.spacingMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+}
 
-  /// Construye la cabecera usando la imagen pre-cortada.
-  Widget _buildBackgroundHeader() {
+class _BackgroundHeader extends StatelessWidget {
+  const _BackgroundHeader();
+
+  @override
+  Widget build(BuildContext context) {
     return const SizedBox(
-      height: 280, // Mantenemos una altura consistente
+      height: 280,
       width: double.infinity,
       child: Image(
         image: AssetImage(AppImages.loginClipper),
-        fit: BoxFit.cover, // Asegura que la imagen cubra el área
+        fit: BoxFit.cover,
       ),
     );
   }
+}
 
-  /// Construye todo el contenido que va por encima del fondo.
-  Widget _buildFormContent() {
-    final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
+class _UsernameField extends StatelessWidget {
+  final LoginViewModel viewModel;
+  const _UsernameField({required this.viewModel});
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.spacingLarge * 1.5,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: mediaQuery.padding.top + AppSizes.spacingSmall),
-            CustomBackButton(
-              color: theme.colorScheme.onSecondary,
-            ),
-            const SizedBox(height: AppSizes.spacingLarge),
-            Text(
-              'Inicia sesión',
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 150),
-                    Text(
-                      'Bienvenido a Greenhouse',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.spacingMedium),
-                    Text(
-                      'Inicia sesión en tu cuenta',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: AppSizes.spacingLarge * 2),
-                    _buildLoginForm(),
-                  ],
-                ),
-              ),
-            ),
-            _buildLoginButton(),
-            SizedBox(
-                height: mediaQuery.padding.bottom + AppSizes.spacingMedium),
-          ],
-        ),
-      ),
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: viewModel.usernameController,
+      decoration: const InputDecoration(labelText: 'Nombre de usuario'),
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.username],
+      validator: (value) {
+        final v = (value ?? '').trim();
+        if (v.isEmpty) return 'Ingresa tu usuario';
+        return null;
+      },
+      inputFormatters: const [],
+      enableSuggestions: true,
+      autocorrect: true,
     );
   }
+}
 
-  Widget _buildLoginForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _viewModel.usernameController,
-          decoration: const InputDecoration(labelText: 'Nombre de usuario'),
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: AppSizes.spacingLarge),
-        ValueListenableBuilder<bool>(
-          valueListenable: _viewModel.isPasswordVisibleNotifier,
-          builder: (context, isVisible, child) {
-            return TextFormField(
-              controller: _viewModel.passwordController,
-              obscureText: !isVisible,
-              decoration: InputDecoration(
-                labelText: 'Contraseña',
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    isVisible ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: _viewModel.togglePasswordVisibility,
-                ),
-              ),
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) {
-                if (_viewModel.isFormValidNotifier.value) {
-                  _performLogin();
-                }
-              },
-            );
+class _PasswordField extends StatelessWidget {
+  final LoginViewModel viewModel;
+  const _PasswordField({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: viewModel.isPasswordVisibleNotifier,
+      builder: (context, isVisible, _) {
+        return TextFormField(
+          controller: viewModel.passwordController,
+          obscureText: !isVisible,
+          decoration: InputDecoration(
+            labelText: 'Contraseña',
+            suffixIcon: IconButton(
+              icon: Icon(isVisible ? Icons.visibility_off : Icons.visibility),
+              onPressed: viewModel.togglePasswordVisibility,
+            ),
+          ),
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+          autofillHints: const [AutofillHints.password],
+          enableSuggestions: false,
+          autocorrect: false,
+          validator: (value) {
+            final v = value ?? '';
+            if (v.isEmpty) return 'Ingresa tu contraseña';
+            return null;
           },
-        ),
-      ],
+        );
+      },
     );
   }
+}
 
-  Widget _buildLoginButton() {
+class _LoginButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _LoginButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.read<LoginViewModel>();
     return ListenableBuilder(
       listenable: Listenable.merge([
-        _viewModel.isFormValidNotifier,
-        _viewModel.signInCommand,
+        viewModel.isFormValidNotifier,
+        viewModel.signInCommand,
       ]),
-      builder: (context, child) {
-        final isFormValid = _viewModel.isFormValidNotifier.value;
-        final isLoading = _viewModel.signInCommand.isRunning;
-
+      builder: (context, _) {
+        final isFormValid = viewModel.isFormValidNotifier.value;
+        final isLoading = viewModel.signInCommand.isRunning;
         return CustomButton.text(
-          onTap: isFormValid && !isLoading ? _performLogin : null,
+          onTap: isFormValid && !isLoading ? onPressed : null,
           text: 'Iniciar sesión',
           isLoading: isLoading,
           isFullWidth: true,

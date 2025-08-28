@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/home/ui/archive_grow_room_card.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
 /// A widget that displays a grid of archived grow rooms.
 ///
-/// It listens to the [HomeViewModel] to display a filtered list of 
+/// It listens to the [HomeViewModel] to display a filtered list of
 /// grow rooms and handles the empty state.
 class ArchivedCropsSection extends StatelessWidget {
   static const int _gridCrossAxisCount = 3;
@@ -65,34 +66,12 @@ class ArchivedCropsSection extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, String searchQuery) {
-    final theme = Theme.of(context);
     final bool isFiltering = searchQuery.isNotEmpty;
 
     final String message = isFiltering
         ? "No se encontró la nave con nombre '$searchQuery'"
         : 'No existen naves para mostrar';
 
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SvgPicture.asset(
-            AppIcons.home,
-            width: AppSizes.iconSizeLarge,
-            height: AppSizes.iconSizeLarge,
-            colorFilter: ColorFilter.mode(
-              theme.colorScheme.onSurfaceVariant,
-              BlendMode.srcIn,
-            ),
-          ),
-          const SizedBox(height: AppSizes.spacingLarge),
-          Text(
-            message,
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    return EmptyState(message: message, iconAsset: AppIcons.home);
   }
 }

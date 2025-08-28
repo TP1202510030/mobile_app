@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/config/api_constants.dart';
 import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
@@ -18,12 +19,15 @@ class HomeViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<GrowRoom> _growRooms = [];
-  int _currentPage = 0;
+  int _currentPage = ApiConstants.defaultPage;
   bool _hasMoreGrowRooms = true;
   bool _isFetchingMore = false;
   HomeTab _selectedTab = HomeTab.growRooms;
   String _searchQuery = '';
   final TextEditingController searchController = TextEditingController();
+
+  static const Duration debounceDuration = Duration(milliseconds: 200);
+  Timer? _debounce;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -31,13 +35,32 @@ class HomeViewModel extends ChangeNotifier {
   HomeTab get selectedTab => _selectedTab;
 
   List<GrowRoom> get growRooms {
-    if (_searchQuery.isEmpty) {
-      return _growRooms;
-    }
+    if (_searchQuery.isEmpty) return _growRooms;
     final query = _searchQuery.toLowerCase();
     return _growRooms
-        .where((room) => room.name.toLowerCase().contains(query))
+        .where((request) => request.name.toLowerCase().contains(query))
         .toList();
+  }
+
+  Future<void> fetchInitialGrowRooms() async {
+    _currentPage = ApiConstants.defaultPage;
+    _hasMoreGrowRooms = true;
+    _error = null;
+    _setLoading(true);
+    await _loadPage(reset: true);
+    _setLoading(false);
+  }
+
+  Future<void> refreshGrowRooms() async {
+    await fetchInitialGrowRooms();
+  }
+
+  Future<void> fetchMoreGrowRooms() async {
+    if (_isFetchingMore || !_hasMoreGrowRooms) return;
+    _isFetchingMore = true;
+    _currentPage += 1;
+    await _loadPage(reset: false);
+    _isFetchingMore = false;
   }
 
   void selectTab(int index) {
@@ -49,43 +72,23 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchInitialGrowRooms() async {
-    _isLoading = true;
-    _error = null;
-    _currentPage = 0;
-    _hasMoreGrowRooms = true;
-    notifyListeners();
-
-    await _fetchGrowRooms();
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> fetchMoreGrowRooms() async {
-    if (_isFetchingMore || !_hasMoreGrowRooms) return;
-
-    _isFetchingMore = true;
-    notifyListeners();
-
-    _currentPage++;
-    await _fetchGrowRooms();
-
-    _isFetchingMore = false;
-    notifyListeners();
+  Future<void> signOut() async {
+    await _authRepository.signOut();
   }
 
   void _onSearchChanged() {
-    if (_searchQuery != searchController.text) {
-      _searchQuery = searchController.text;
+    _debounce?.cancel();
+    _debounce = Timer(debounceDuration, () {
+      _searchQuery = searchController.text.trim();
       notifyListeners();
-    }
+    });
   }
 
-  Future<void> _fetchGrowRooms() async {
+  Future<void> _loadPage({required bool reset}) async {
     final companyId = _authRepository.companyId;
     if (companyId == null) {
-      _error = "Could not get company ID.";
+      _error = 'No se pudo determinar la compañía del usuario.';
+      notifyListeners();
       return;
     }
 
@@ -94,24 +97,35 @@ class HomeViewModel extends ChangeNotifier {
       page: _currentPage,
       size: ApiConstants.defaultPageSize,
     );
-    final result = await _getGrowRoomsUseCase(params);
 
-    if (result is Success) {
-      final pagedResult = (result as Success).value;
-      if (_currentPage == 0) {
-        _growRooms = pagedResult.content;
-      } else {
-        _growRooms.addAll(pagedResult.content);
-      }
-      _hasMoreGrowRooms = !pagedResult.isLast;
-    } else if (result is Error) {
-      _error =
-          "Error loading grow rooms: ${(result as Error).error.toString()}";
+    final result = await _getGrowRoomsUseCase(params);
+    switch (result) {
+      case Success(value: final paged):
+        if (reset) {
+          _growRooms = paged.content;
+        } else {
+          _growRooms.addAll(paged.content);
+        }
+        _hasMoreGrowRooms = !paged.isLast;
+        _error = null;
+        notifyListeners();
+        break;
+      case Error(error: final e):
+        _error = 'Error al cargar naves: ${e.toString()}';
+        notifyListeners();
+        break;
     }
+  }
+
+  void _setLoading(bool value) {
+    if (_isLoading == value) return;
+    _isLoading = value;
+    notifyListeners();
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();

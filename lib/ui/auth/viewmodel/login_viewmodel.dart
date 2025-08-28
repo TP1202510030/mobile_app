@@ -6,34 +6,34 @@ import 'package:mobile_app/utils/result.dart';
 class LoginViewModel {
   final SignInUseCase _signInUseCase;
 
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+  LoginViewModel(this._signInUseCase) {
+    usernameController.addListener(_validateForm);
+    passwordController.addListener(_validateForm);
+    signInCommand = Command<void, SignInParams>(_executeSignIn);
+  }
+
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   late final Command<void, SignInParams> signInCommand;
 
   final ValueNotifier<bool> isPasswordVisibleNotifier = ValueNotifier(false);
-
   final ValueNotifier<bool> isFormValidNotifier = ValueNotifier(false);
-
-  LoginViewModel(this._signInUseCase) {
-    signInCommand = Command(_signIn);
-    usernameController.addListener(_validateForm);
-    passwordController.addListener(_validateForm);
-  }
-
-  Future<Result<void>> _signIn(SignInParams params) {
-    return _signInUseCase(params);
-  }
 
   void togglePasswordVisibility() {
     isPasswordVisibleNotifier.value = !isPasswordVisibleNotifier.value;
   }
 
+  Future<Result<void>> _executeSignIn(SignInParams params) async {
+    return await _signInUseCase(params);
+  }
+
   void _validateForm() {
-    final isValid = usernameController.text.isNotEmpty &&
-        passwordController.text.isNotEmpty;
-    if (isFormValidNotifier.value != isValid) {
-      isFormValidNotifier.value = isValid;
+    final String user = usernameController.text.trim();
+    final String pass = passwordController.text;
+    final bool valid = user.isNotEmpty && pass.length >= 3;
+    if (isFormValidNotifier.value != valid) {
+      isFormValidNotifier.value = valid;
     }
   }
 
