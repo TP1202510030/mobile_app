@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/domain/entities/measurement/parameter.dart';
@@ -134,3 +135,4 @@ class _SensorsSectionState extends State<SensorsSection> {
     );
   }
 }
+*/

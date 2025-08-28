@@ -1,65 +1,74 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 
 class ArchiveGrowRoomCard extends StatelessWidget {
-  final String name;
-  final String imageUrl;
+  final GrowRoom growRoom;
   final VoidCallback onTap;
-
-  static const double _borderRadius = 18.0;
-  static const double _padding = 8.0;
 
   const ArchiveGrowRoomCard({
     super.key,
-    required this.name,
-    required this.imageUrl,
+    required this.growRoom,
     required this.onTap,
   });
 
+  static const double _cardPadding = 8.0;
+  static const int _maxTitleLines = 2;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(_borderRadius),
+      borderRadius: BorderRadius.circular(AppSizes.borderRadiusLarge),
       child: Card(
         clipBehavior: Clip.antiAlias,
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: colorScheme.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_borderRadius),
+          borderRadius: BorderRadius.circular(AppSizes.borderRadiusLarge),
         ),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              imageUrl,
+            CachedNetworkImage(
+              imageUrl: growRoom.imageUrl,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(
+              placeholder: (context, url) =>
+                  const Center(child: CircularProgressIndicator()),
+              errorWidget: (context, url, error) => Icon(
                 Icons.image_not_supported_outlined,
-                size: 48,
-                color: Colors.grey,
+                size: AppSizes.iconSizeLarge,
+                color: colorScheme.outline,
               ),
             ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+                  colors: [
+                    colorScheme.shadow.withOpacity(0.9),
+                    Colors.transparent
+                  ],
                   begin: Alignment.bottomCenter,
                   end: Alignment.center,
                 ),
               ),
             ),
             Positioned(
-              bottom: _padding,
-              left: _padding,
-              right: _padding,
+              bottom: _cardPadding,
+              left: _cardPadding,
+              right: _cardPadding,
               child: Text(
-                name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onTertiary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                growRoom.name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: _maxTitleLines,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

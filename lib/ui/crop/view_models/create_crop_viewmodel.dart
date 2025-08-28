@@ -171,7 +171,7 @@ class CreateCropViewModel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
+    try {/*
       final cropData = _buildCropDataPayload();
       await _createCropUseCase(
           CreateCropParams(growRoomId: _growRoomId, cropData: cropData));
@@ -181,7 +181,7 @@ class CreateCropViewModel extends ChangeNotifier {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('¡Cultivo creado exitosamente!')),
         );
-      }
+      }*/
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

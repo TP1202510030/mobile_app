@@ -9,7 +9,7 @@ abstract final class ApiRoutes {
 
   static const String _companiesBase = '/api/v1/companies';
   static String growRoomsByCompanyId(int companyId) =>
-      '$_companiesBase/$companyId/grow_rooms';
+      '$_companiesBase/$companyId/grow-rooms';
 
   static const String _growRoomsBase = '/api/v1/grow_rooms';
   static String growRoomById(int growRoomId) => '$_growRoomsBase/$growRoomId';
@@ -30,7 +30,7 @@ abstract final class ApiRoutes {
   static String controlActionsForCurrentPhaseByCropId(int cropId) =>
       '$_cropsBase/$cropId/control-actions';
 
-  static const String _phaseBase = '/api/v1/crop_phases';
+  static const String _phaseBase = '/api/v1/crop-phases';
   static String measurementsByPhaseId(int phaseId) =>
       '$_phaseBase/$phaseId/measurements';
   static String controlActionsByPhaseId(int phaseId) =>

@@ -1,105 +1,119 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
+import 'package:mobile_app/config/api_constants.dart';
 import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
 import 'package:mobile_app/domain/repositories/auth_repository.dart';
 import 'package:mobile_app/domain/use_cases/grow_room/get_grow_rooms_by_company_id_use_case.dart';
-import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
+import 'package:mobile_app/utils/result.dart';
+
+enum HomeTab { growRooms, archive }
 
 class HomeViewModel extends ChangeNotifier {
-  final GetGrowRoomsByCompanyIdUseCase _getHomeDataUseCase;
+  final GetGrowRoomsByCompanyIdUseCase _getGrowRoomsUseCase;
   final AuthRepository _authRepository;
-  final SignOutUseCase _signOutUseCase;
 
-  HomeViewModel({
-    required GetGrowRoomsByCompanyIdUseCase getHomeDataUseCase,
-    required AuthRepository authRepository,
-    required SignOutUseCase signOutUseCase,
-  })  : _getHomeDataUseCase = getHomeDataUseCase,
-        _authRepository = authRepository,
-        _signOutUseCase = signOutUseCase {
-    fetchGrowRooms();
+  HomeViewModel(this._getGrowRoomsUseCase, this._authRepository) {
+    searchController.addListener(_onSearchChanged);
   }
 
-  // --- Estado Interno ---
-  List<GrowRoom> _growRooms = [];
-  int _selectedTabIndex = 0;
   bool _isLoading = false;
   String? _error;
+  List<GrowRoom> _growRooms = [];
+  int _currentPage = 0;
+  bool _hasMoreGrowRooms = true;
+  bool _isFetchingMore = false;
+  HomeTab _selectedTab = HomeTab.growRooms;
   String _searchQuery = '';
   final TextEditingController searchController = TextEditingController();
 
-  // --- Getters Públicos ---
-  int get selectedTabIndex => _selectedTabIndex;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  String get searchQuery => _searchQuery;
-  List<GrowRoom> get growRooms => _filteredGrowRooms;
+  bool get hasMoreGrowRooms => _hasMoreGrowRooms;
+  HomeTab get selectedTab => _selectedTab;
 
-  bool hasNotification = false;
-  VoidCallback? onNotificationTap;
-
-  List<GrowRoom> get _filteredGrowRooms {
-    if (_searchQuery.isEmpty) return _growRooms;
+  List<GrowRoom> get growRooms {
+    if (_searchQuery.isEmpty) {
+      return _growRooms;
+    }
+    final query = _searchQuery.toLowerCase();
     return _growRooms
-        .where((room) =>
-            room.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .where((room) => room.name.toLowerCase().contains(query))
         .toList();
   }
 
-  void setSearchQuery(String query) {
-    if (_searchQuery != query) {
-      _searchQuery = query;
+  void selectTab(int index) {
+    final newTab = HomeTab.values[index];
+    if (_selectedTab != newTab) {
+      _selectedTab = newTab;
+      searchController.clear();
       notifyListeners();
     }
   }
 
-  Future<void> fetchGrowRooms() async {
+  Future<void> fetchInitialGrowRooms() async {
     _isLoading = true;
     _error = null;
+    _currentPage = 0;
+    _hasMoreGrowRooms = true;
     notifyListeners();
-    try {
-      final companyId = _authRepository.companyId;
-      if (companyId == null) {
-        throw Exception(
-            'ID de compañía no encontrado. Por favor, inicie sesión de nuevo.');
+
+    await _fetchGrowRooms();
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> fetchMoreGrowRooms() async {
+    if (_isFetchingMore || !_hasMoreGrowRooms) return;
+
+    _isFetchingMore = true;
+    notifyListeners();
+
+    _currentPage++;
+    await _fetchGrowRooms();
+
+    _isFetchingMore = false;
+    notifyListeners();
+  }
+
+  void _onSearchChanged() {
+    if (_searchQuery != searchController.text) {
+      _searchQuery = searchController.text;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchGrowRooms() async {
+    final companyId = _authRepository.companyId;
+    if (companyId == null) {
+      _error = "Could not get company ID.";
+      return;
+    }
+
+    final params = GetGrowRoomsByCompanyIdParams(
+      companyId: companyId,
+      page: _currentPage,
+      size: ApiConstants.defaultPageSize,
+    );
+    final result = await _getGrowRoomsUseCase(params);
+
+    if (result is Success) {
+      final pagedResult = (result as Success).value;
+      if (_currentPage == 0) {
+        _growRooms = pagedResult.content;
+      } else {
+        _growRooms.addAll(pagedResult.content);
       }
-
-      _growRooms = await _getHomeDataUseCase(
-          GetGrowRoomsByCompanyIdParams(companyId: companyId));
-    } catch (e) {
-      _error = 'Error al cargar las naves: ${e.toString()}';
-      developer.log(_error ?? 'Error desconocido al cargar las naves');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      _hasMoreGrowRooms = !pagedResult.isLast;
+    } else if (result is Error) {
+      _error =
+          "Error loading grow rooms: ${(result as Error).error.toString()}";
     }
-  }
-
-  Future<void> refreshGrowRooms() async {
-    await fetchGrowRooms();
-  }
-
-  void selectTab(int index) {
-    if (_selectedTabIndex != index) {
-      _selectedTabIndex = index;
-      searchController.clear();
-      setSearchQuery('');
-      notifyListeners();
-    }
-  }
-
-  Future<void> signOut() async {
-    await _signOutUseCase(null);
   }
 
   @override
   void dispose() {
+    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();
-  }
-
-  void handleNotificationTap() {
-    onNotificationTap?.call();
   }
 }

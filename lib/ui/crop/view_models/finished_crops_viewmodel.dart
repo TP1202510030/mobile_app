@@ -4,12 +4,12 @@ import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_by_grow_room
 
 class FinishedCropsViewModel extends ChangeNotifier {
   final int growRoomId;
-  final GetFinishedCropsDataUseCase _getFinishedCropsDataUseCase;
+  //final GetFinishedCropsDataUseCase _getFinishedCropsDataUseCase;
 
   FinishedCropsViewModel({
     required this.growRoomId,
-    required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
-  }) : _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase {
+    //required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
+  }) /*: _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase*/ {
     fetchAllData();
   }
 
@@ -40,10 +40,10 @@ class FinishedCropsViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {
+    try {/*
       final data = await _getFinishedCropsDataUseCase(growRoomId);
       _allFinishedCrops = data.finishedCrops;
-      _growRoomName = data.growRoomName;
+      _growRoomName = data.growRoomName;*/
     } catch (e) {
       _error = 'Ocurrió un error al cargar los datos: ${e.toString()}';
       _allFinishedCrops = [];

@@ -142,11 +142,12 @@ class _HistoryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: measurements.map((m) {
-              return ParameterIcon(
+              return Text(
+                  "Descomentar y borrar este text"); /*ParameterIcon(
                 iconPath: ParameterData.fromKey(m.parameter).iconPath,
                 value: m.value,
                 unitOfMeasure: m.unitOfMeasurement,
-              );
+              );*/
             }).toList(),
           ),
         ],

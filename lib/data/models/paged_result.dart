@@ -29,4 +29,16 @@ class PagedResult<T> {
       isFirst: json['first'] as bool,
     );
   }
+
+  factory PagedResult.empty() {
+    return PagedResult<T>(
+      content: [],
+      totalPages: 0,
+      totalElements: 0,
+      size: 0,
+      number: 0,
+      isLast: true,
+      isFirst: true,
+    );
+  }
 }

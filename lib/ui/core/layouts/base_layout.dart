@@ -19,7 +19,12 @@ class BaseLayout extends StatelessWidget {
     return Scaffold(
       appBar: showAppBar
           ? AppBar(
-              title: title != null ? Text(title!) : null,
+              title: title != null
+                  ? Text(
+                      title!,
+                      style: Theme.of(context).textTheme.displaySmall,
+                    )
+                  : null,
               actions: actions,
             )
           : null,

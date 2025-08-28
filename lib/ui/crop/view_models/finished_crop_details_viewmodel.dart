@@ -44,10 +44,10 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {
+    try {/*
       final data = await _getFinishedCropDetailsUseCase(cropId);
       _crop = data.crop;
-      _allMeasurements = data.allMeasurements;
+      _allMeasurements = data.allMeasurements;*/
     } catch (e) {
       _error = 'Ocurrió un error al cargar el historial: ${e.toString()}';
     } finally {

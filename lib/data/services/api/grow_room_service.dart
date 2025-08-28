@@ -36,6 +36,10 @@ class GrowRoomService {
         },
       );
 
+      if (response.data is! Map<String, dynamic>) {
+        return PagedResult<GrowRoom>.empty();
+      }
+
       return PagedResult.fromJson(
           response.data, (json) => GrowRoom.fromJson(json));
     } on DioException catch (e) {

@@ -30,6 +30,7 @@ import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phas
 import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:mobile_app/ui/auth/viewmodel/login_viewmodel.dart';
+import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,4 +101,5 @@ Future<void> setupLocator() async {
 
   // --- FACTORIES (ViewModels) ---
   locator.registerFactory(() => LoginViewModel(locator()));
+  locator.registerFactory(() => HomeViewModel(locator(), locator()));
 }

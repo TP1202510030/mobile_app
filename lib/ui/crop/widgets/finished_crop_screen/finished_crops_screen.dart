@@ -101,10 +101,10 @@ class _FinishedCropCard extends StatelessWidget {
     final totalProduction = crop.totalProduction?.toStringAsFixed(2) ?? 'N/A';
 
     return InkWell(
-      onTap: () {
+      onTap: () {/*
         final path =
             Routes.finishedCropDetail.replaceAll(':cropId', crop.id.toString());
-        context.push(path, extra: totalProduction);
+        context.push(path, extra: totalProduction);*/
       },
       borderRadius: BorderRadius.circular(12.0),
       child: Container(

@@ -1,120 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mobile_app/domain/entities/control_action/actuator.dart';
-import 'package:mobile_app/domain/entities/measurement/parameter.dart';
-import 'package:mobile_app/routing/routes.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
-import 'package:mobile_app/ui/core/ui/actuator_icon.dart';
-import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
-import 'package:mobile_app/ui/core/ui/search_bar.dart';
-import 'package:mobile_app/ui/home/ui/grow_room_card.dart';
+import 'package:mobile_app/ui/home/ui/grow_room_list.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
-class GrowRoomSection extends StatelessWidget {
+/// A widget that displays a list of grow room cards.
+///
+/// Its responsibility is to react to the [HomeViewModel] state to
+/// display a list of grow rooms and handles the empty state.
+class GrowRoomsSection extends StatelessWidget {
   final HomeViewModel viewModel;
-  const GrowRoomSection({super.key, required this.viewModel});
+
+  const GrowRoomsSection({super.key, required this.viewModel});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomSearchBar(
-          hintText: "Buscar nave...",
-          controller: viewModel.searchController,
-          onChanged: viewModel.setSearchQuery,
-          onClear: () => viewModel.setSearchQuery(''),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: ListenableBuilder(
-            listenable: viewModel,
-            builder: (_, __) {
-              final rooms = viewModel.growRooms;
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, child) {
+        final filteredRooms = viewModel.growRooms;
+        final isLoading = viewModel.isLoading;
+        final error = viewModel.error;
 
-              if (rooms.isEmpty && viewModel.searchQuery.isNotEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'No se encontró la nave "${viewModel.searchQuery}"',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ),
-                );
-              }
+        if (isLoading && filteredRooms.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              if (rooms.isEmpty) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      AppIcons.home,
-                      width: 64.0,
-                      height: 64.0,
-                      colorFilter: ColorFilter.mode(
-                        Theme.of(context).colorScheme.onSurface,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No existen naves para mostrar',
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ],
-                );
-              }
+        if (error != null && filteredRooms.isEmpty) {
+          return Center(
+            child: Text(
+              error,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          );
+        }
 
-              return RefreshIndicator(
-                onRefresh: viewModel.fetchGrowRooms,
-                child: ListView.separated(
-                  itemCount: rooms.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) {
-                    final room = rooms[index];
+        if (filteredRooms.isEmpty) {
+          return _buildEmptyState(context, viewModel.searchController.text);
+        }
 
-                    final params = room.latestMeasurements.map((m) {
-                      final parameterEnum = ParameterData.fromKey(m.parameter);
-                      return ParameterIcon(
-                        iconPath: parameterEnum.iconPath,
-                        value: m.value,
-                        unitOfMeasure: m.unitOfMeasurement,
-                      );
-                    }).toList();
+        return GrowRoomList(
+          growRooms: filteredRooms,
+          hasMore: viewModel.hasMoreGrowRooms,
+          viewModel: viewModel,
+        );
+      },
+    );
+  }
 
-                    final actuators = room.actuatorStates.entries.map((entry) {
-                      final actuatorEnum = ActuatorData.fromKey(entry.key);
-                      return ActuatorIcon(
-                        iconPath: actuatorEnum.iconPath,
-                        isActive: entry.value == 'ACTIVATED',
-                      );
-                    }).toList();
+  Widget _buildEmptyState(BuildContext context, String searchQuery) {
+    final theme = Theme.of(context);
+    final isFiltering = searchQuery.isNotEmpty;
 
-                    return GrowRoomCard(
-                      title: room.name,
-                      imagePath: room.imageUrl,
-                      parameters: params,
-                      actuators: actuators,
-                      onTap: room.hasActiveCrop
-                          ? () => context.push(
-                                Routes.crop.replaceAll(
-                                    ':cropId', room.activeCropId.toString()),
-                                extra: room.name,
-                              )
-                          : null,
-                      hasActiveCrop: room.hasActiveCrop,
-                      onStartCrop: () => context.push(Routes.createCrop
-                          .replaceAll(':growRoomId', room.id.toString())),
-                    );
-                  },
-                ),
-              );
-            },
+    final message = isFiltering
+        ? "No se encontró la nave con nombre '$searchQuery'"
+        : "No existen naves para mostrar";
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            AppIcons.home,
+            width: AppSizes.iconSizeLarge,
+            height: AppSizes.iconSizeLarge,
+            colorFilter: ColorFilter.mode(
+              theme.colorScheme.onSurfaceVariant,
+              BlendMode.srcIn,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: AppSizes.spacingLarge),
+          Text(
+            message,
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
