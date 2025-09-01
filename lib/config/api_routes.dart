@@ -11,7 +11,7 @@ abstract final class ApiRoutes {
   static String growRoomsByCompanyId(int companyId) =>
       '$_companiesBase/$companyId/grow-rooms';
 
-  static const String _growRoomsBase = '/api/v1/grow_rooms';
+  static const String _growRoomsBase = '/api/v1/grow-rooms';
   static String growRoomById(int growRoomId) => '$_growRoomsBase/$growRoomId';
   static String cropsByGrowRoomId(int growRoomId) =>
       '$_growRoomsBase/$growRoomId/crops';

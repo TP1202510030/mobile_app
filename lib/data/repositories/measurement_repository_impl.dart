@@ -3,6 +3,7 @@ import 'package:mobile_app/data/services/api/measurement_service.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/domain/repositories/measurement_repository.dart';
 
+/// Concrete implementation of [MeasurementRepository].
 class MeasurementRepositoryImpl implements MeasurementRepository {
   final MeasurementService _measurementService;
 

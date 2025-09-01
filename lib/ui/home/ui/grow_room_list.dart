@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
+import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/home/ui/grow_room_card.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
@@ -66,7 +68,8 @@ class _GrowRoomListState extends State<GrowRoomList> {
               // To-do
             },
             onStartCrop: () {
-              // To-do
+              context.push(AppRoutes.startCreateCrop(
+                  growRoomId: growRoom.id.toString()));
             },
           );
         },

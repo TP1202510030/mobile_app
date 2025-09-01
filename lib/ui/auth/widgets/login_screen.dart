@@ -35,7 +35,6 @@ class _LoginView extends StatefulWidget {
 class _LoginViewState extends State<_LoginView> {
   final _formKey = GlobalKey<FormState>();
 
-  // 🔒 Guardamos la ref del VM para evitar lookups en dispose
   late final LoginViewModel _viewModel;
 
   @override

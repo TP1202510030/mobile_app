@@ -1,12 +1,14 @@
 import 'package:mobile_app/config/api_constants.dart';
 import 'package:mobile_app/data/models/create_crop_request.dart';
 import 'package:mobile_app/data/models/finish_crop_request.dart';
+import 'package:mobile_app/data/models/paged_result.dart';
 import 'package:mobile_app/data/services/api/crop_service.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/repositories/crop_repository.dart';
 import 'package:mobile_app/core/exceptions/api_exception.dart';
 import 'package:mobile_app/utils/result.dart';
 
+/// Concrete implementation of [CropRepository].
 class CropRepositoryImpl implements CropRepository {
   final CropService _cropService;
 
@@ -26,27 +28,25 @@ class CropRepositoryImpl implements CropRepository {
   }
 
   @override
-  Future<List<Crop>> getCropsByGrowRoomId(int growRoomId) async {
-    // Devuelve una lista vacía en caso de error para no romper la UI.
-    // Una estrategia alternativa sería devolver un `Result<List<Crop>>`.
+  Future<Result<PagedResult<Crop>>> getCropsByGrowRoomId(int growRoomId) async {
     try {
       final pagedResult = await _cropService.getCropsByGrowRoomId(
           growRoomId, _defaultPage, _defaultPageSize);
-      return pagedResult.content;
-    } catch (e) {
-      // En un proyecto real, aquí se debería registrar el error.
-      return [];
+      return Result.success(pagedResult);
+    } on ApiException catch (e) {
+      return Result.error(e);
     }
   }
 
   @override
-  Future<List<Crop>> getFinishedCropsByGrowRoomId(int growRoomId) async {
+  Future<Result<PagedResult<Crop>>> getFinishedCropsByGrowRoomId(
+      int growRoomId) async {
     try {
       final pagedResult = await _cropService.getFinishedCropsByGrowRoomId(
           growRoomId, _defaultPage, _defaultPageSize);
-      return pagedResult.content;
-    } catch (e) {
-      return [];
+      return Result.success(pagedResult);
+    } on ApiException catch (e) {
+      return Result.error(e);
     }
   }
 

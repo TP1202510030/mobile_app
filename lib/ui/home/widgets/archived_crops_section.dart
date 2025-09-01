@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_app/routing/routes.dart';
-import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/home/ui/archive_grow_room_card.dart';
@@ -70,7 +68,7 @@ class ArchivedCropsSection extends StatelessWidget {
 
     final String message = isFiltering
         ? "No se encontró la nave con nombre '$searchQuery'"
-        : 'No existen naves para mostrar';
+        : "No existen naves para mostrar";
 
     return EmptyState(message: message, iconAsset: AppIcons.home);
   }

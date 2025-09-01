@@ -1,8 +1,20 @@
-/*
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
+
+class PanelItem {
+  final String id;
+  final String iconPath;
+  final String title;
+  final Widget body;
+
+  const PanelItem({
+    required this.id,
+    required this.iconPath,
+    required this.title,
+    required this.body,
+  });
+}
 
 class CustomExpansionPanelList extends StatefulWidget {
   final List<PanelItem> items;
@@ -11,7 +23,7 @@ class CustomExpansionPanelList extends StatefulWidget {
   const CustomExpansionPanelList({
     super.key,
     required this.items,
-    this.animationDuration = const Duration(milliseconds: 200),
+    this.animationDuration = const Duration(milliseconds: 300),
   });
 
   @override
@@ -20,67 +32,90 @@ class CustomExpansionPanelList extends StatefulWidget {
 }
 
 class _CustomExpansionPanelListState extends State<CustomExpansionPanelList> {
+  final Set<String> _openPanelIds = {};
+
+  void _togglePanel(String panelId) {
+    setState(() {
+      if (_openPanelIds.contains(panelId)) {
+        _openPanelIds.remove(panelId);
+      } else {
+        _openPanelIds.add(panelId);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: widget.items.map((item) {
-        return _buildPanel(item);
+        final isExpanded = _openPanelIds.contains(item.id);
+        return _ExpansionPanel(
+          item: item,
+          isExpanded: isExpanded,
+          onTap: () => _togglePanel(item.id),
+          animationDuration: widget.animationDuration,
+        );
       }).toList(),
     );
   }
+}
 
-  Widget _buildPanel(PanelItem item) {
-    final headerTextColor = Theme.of(context).colorScheme.onSurface;
+class _ExpansionPanel extends StatelessWidget {
+  final PanelItem item;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final Duration animationDuration;
+
+  const _ExpansionPanel({
+    required this.item,
+    required this.isExpanded,
+    required this.onTap,
+    required this.animationDuration,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final headerTextColor = theme.colorScheme.onSurface;
+
     return Container(
-      margin: EdgeInsets.symmetric(vertical: AppSizes.blockSizeVertical * 1),
+      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingSmall),
       child: Column(
         children: [
           InkWell(
-            onTap: () {
-              item.tooltipBehavior.hide();
-
-              Future.delayed(const Duration(milliseconds: 50), () {
-                if (mounted) {
-                  setState(() {
-                    item.isExpanded = !item.isExpanded;
-                  });
-                }
-              });
-            },
+            onTap: onTap,
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.blockSizeHorizontal * 4,
-                vertical: AppSizes.blockSizeVertical * 2,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.spacingLarge,
+                vertical: AppSizes.spacingMedium,
               ),
               child: Row(
                 children: [
                   AnimatedRotation(
-                    turns: item.isExpanded ? 0.5 : 0.0,
-                    duration: widget.animationDuration,
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: animationDuration,
                     child: Icon(
                       Icons.keyboard_arrow_down,
                       color: headerTextColor,
-                      size: AppSizes.blockSizeHorizontal * 6,
+                      size: AppSizes.iconSizeMedium,
                     ),
                   ),
-                  SizedBox(width: AppSizes.blockSizeHorizontal * 2),
+                  const SizedBox(width: AppSizes.spacingSmall),
                   SvgPicture.asset(
                     item.iconPath,
-                    width: AppSizes.blockSizeHorizontal * 6,
-                    height: AppSizes.blockSizeHorizontal * 6,
+                    width: AppSizes.iconSizeMedium,
+                    height: AppSizes.iconSizeMedium,
                     colorFilter: ColorFilter.mode(
                       headerTextColor,
                       BlendMode.srcIn,
                     ),
                   ),
-                  SizedBox(width: AppSizes.blockSizeHorizontal * 4),
+                  const SizedBox(width: AppSizes.spacingMedium),
                   Expanded(
                     child: Text(
                       item.title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge!
-                          .copyWith(color: headerTextColor),
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(color: headerTextColor),
                     ),
                   ),
                 ],
@@ -90,36 +125,19 @@ class _CustomExpansionPanelListState extends State<CustomExpansionPanelList> {
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.blockSizeHorizontal * 4,
-                vertical: AppSizes.blockSizeVertical * 2,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.spacingLarge,
+                vertical: AppSizes.spacingMedium,
               ),
               child: item.body,
             ),
-            crossFadeState: item.isExpanded
+            crossFadeState: isExpanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            duration: widget.animationDuration,
+            duration: animationDuration,
           ),
         ],
       ),
     );
   }
 }
-
-class PanelItem {
-  final String iconPath;
-  final String title;
-  final Widget body;
-  final TooltipBehavior tooltipBehavior;
-  bool isExpanded;
-
-  PanelItem({
-    required this.iconPath,
-    required this.title,
-    required this.body,
-    required this.tooltipBehavior,
-    this.isExpanded = false,
-  });
-}
-*/

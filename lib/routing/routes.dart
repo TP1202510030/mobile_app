@@ -19,14 +19,12 @@ abstract final class AppRoutes {
   static const finishedCropListRelative = ':growRoomId';
   static const finishedCropDetailRelative = ':growRoomId/crop/:cropId';
 
+  static const createCrop = '/grow-room/:growRoomId/create-crop';
+
   // --- Navigation Helper Methods ---
   // These methods provide a type-safe and centralized way to build routes
   // for navigation calls, preventing typos.
   // Example usage: context.go(AppRoutes.createCrop(growRoomId: '123'));
-
-  /// Path: /active-crops/:growRoomId/create-crop
-  static String createCrop({required String growRoomId}) =>
-      '$activeCrops/$growRoomId/$createCropRelative';
 
   /// Path: /active-crops/:growRoomId/crop/:cropId
   static String cropDetail(
@@ -41,4 +39,7 @@ abstract final class AppRoutes {
   static String finishedCropDetail(
           {required String growRoomId, required String cropId}) =>
       '$archive/$growRoomId/crop/$cropId';
+
+  static String startCreateCrop({required String growRoomId}) =>
+      '/grow-room/$growRoomId/create-crop';
 }

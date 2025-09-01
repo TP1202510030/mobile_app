@@ -150,7 +150,7 @@ class CustomButton extends StatelessWidget {
       foregroundColor: WidgetStateProperty.resolveWith<Color?>(
         (states) {
           if (states.contains(WidgetState.disabled)) {
-            return Theme.of(context).colorScheme.onSurface.withAlpha(31);
+            return Theme.of(context).colorScheme.onSurface.withAlpha(150);
           }
           return _getForegroundColor(context);
         },
@@ -163,7 +163,7 @@ class CustomButton extends StatelessWidget {
           backgroundColor: WidgetStateProperty.resolveWith<Color?>(
             (states) {
               if (states.contains(WidgetState.disabled)) {
-                return Theme.of(context).colorScheme.onSurface.withAlpha(31);
+                return Theme.of(context).colorScheme.outline;
               }
               return Theme.of(context).colorScheme.primary;
             },
@@ -175,7 +175,7 @@ class CustomButton extends StatelessWidget {
             (states) {
               if (states.contains(WidgetState.disabled)) {
                 return BorderSide(
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(31),
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(150),
                 );
               }
               return BorderSide(color: Theme.of(context).colorScheme.primary);
@@ -187,7 +187,7 @@ class CustomButton extends StatelessWidget {
           backgroundColor: WidgetStateProperty.resolveWith<Color?>(
             (states) {
               if (states.contains(WidgetState.disabled)) {
-                return Theme.of(context).colorScheme.onSurface.withAlpha(31);
+                return Theme.of(context).colorScheme.outline;
               }
 
               return Theme.of(context).extension<AppAccentColors>()!.accent;

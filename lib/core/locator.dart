@@ -12,6 +12,7 @@ import 'package:mobile_app/data/services/api/crop_service.dart';
 import 'package:mobile_app/data/services/api/grow_room_service.dart';
 import 'package:mobile_app/data/services/api/measurement_service.dart';
 import 'package:mobile_app/data/services/api/auth_service.dart';
+import 'package:mobile_app/domain/mappers/create_crop_mapper.dart';
 import 'package:mobile_app/domain/repositories/auth_repository.dart';
 import 'package:mobile_app/domain/repositories/control_action_repository.dart';
 import 'package:mobile_app/domain/repositories/crop_repository.dart';
@@ -29,7 +30,9 @@ import 'package:mobile_app/domain/use_cases/grow_room/get_grow_rooms_by_company_
 import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phase_id_use_case.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
+import 'package:mobile_app/domain/validators/create_crop_validator.dart';
 import 'package:mobile_app/ui/auth/viewmodel/login_viewmodel.dart';
+import 'package:mobile_app/ui/stepper/view_models/create_crop_viewmodel.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -90,6 +93,8 @@ Future<void> setupLocator() async {
       () => GetFinishedCropsByGrowRoomIdUseCase(locator()));
   locator.registerLazySingleton(
       () => GetFinishedCropDetailsUseCase(locator(), locator(), locator()));
+  locator.registerLazySingleton(() => CreateCropValidator());
+  locator.registerLazySingleton(() => CreateCropMapper());
 
   // Measurement
   locator
@@ -102,4 +107,7 @@ Future<void> setupLocator() async {
   // --- FACTORIES (ViewModels) ---
   locator.registerFactory(() => LoginViewModel(locator()));
   locator.registerFactory(() => HomeViewModel(locator(), locator()));
+  locator.registerFactoryParam<CreateCropViewModel, int, void>(
+      (growRoomId, _) =>
+          CreateCropViewModel(growRoomId, locator(), locator(), locator()));
 }

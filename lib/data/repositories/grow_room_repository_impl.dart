@@ -5,6 +5,7 @@ import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
 import 'package:mobile_app/domain/repositories/grow_room_repository.dart';
 import 'package:mobile_app/utils/result.dart';
 
+/// Concrete implementation of [GrowRoomRepository].
 class GrowRoomRepositoryImpl implements GrowRoomRepository {
   final GrowRoomService _growRoomService;
 

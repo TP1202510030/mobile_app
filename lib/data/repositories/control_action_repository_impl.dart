@@ -3,6 +3,7 @@ import 'package:mobile_app/data/services/api/control_action_service.dart';
 import 'package:mobile_app/domain/entities/control_action/control_action.dart';
 import 'package:mobile_app/domain/repositories/control_action_repository.dart';
 
+/// Concrete implementation of [ControlActionRepository].
 class ControlActionRepositoryImpl implements ControlActionRepository {
   final ControlActionService _controlActionService;
 
