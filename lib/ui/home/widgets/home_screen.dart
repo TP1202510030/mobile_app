@@ -16,8 +16,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<HomeViewModel>(
-      create: (_) => locator<HomeViewModel>()..fetchInitialGrowRooms(),
+    return ChangeNotifierProvider<HomeViewModel>.value(
+      value: locator<HomeViewModel>()..fetchInitialGrowRooms(),
       child: const _HomeView(),
     );
   }
@@ -50,7 +50,10 @@ class _HomeView extends StatelessWidget {
       actions: [
         IconButton(
           tooltip: 'Cerrar sesión',
-          onPressed: viewModel.signOut,
+          onPressed: () async {
+            await viewModel.signOut();
+            locator.resetLazySingleton<HomeViewModel>();
+          },
           icon: const Icon(Icons.logout),
         ),
       ],

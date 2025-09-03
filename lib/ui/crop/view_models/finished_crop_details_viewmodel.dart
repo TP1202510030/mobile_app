@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/domain/use_cases/crop/get_finished_crop_details_use_case.dart';
+import 'package:mobile_app/utils/result.dart';
 
-/// ViewModel para la pantalla de detalles de un cultivo finalizado.
-///
-/// Utiliza [GetFinishedCropDetailsUseCase] para obtener toda la información histórica
-/// del cultivo y la procesa para ser mostrada en la UI.
 class FinishedCropDetailViewModel extends ChangeNotifier {
   final int cropId;
   final GetFinishedCropDetailsUseCase _getFinishedCropDetailsUseCase;
@@ -44,15 +41,21 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {/*
-      final data = await _getFinishedCropDetailsUseCase(cropId);
-      _crop = data.crop;
-      _allMeasurements = data.allMeasurements;*/
-    } catch (e) {
-      _error = 'Ocurrió un error al cargar el historial: ${e.toString()}';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    final result = await _getFinishedCropDetailsUseCase(
+        GetFinishedCropDetailsParams(cropId: cropId));
+
+    switch (result) {
+      case Success(value: final data):
+        _crop = data.crop;
+        _allMeasurements =
+            data.phaseDetails.expand((detail) => detail.measurements).toList();
+        break;
+      case Error(error: final e):
+        _error = 'Ocurrió un error al cargar el historial: ${e.toString()}';
+        break;
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 }

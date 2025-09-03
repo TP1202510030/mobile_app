@@ -6,10 +6,6 @@ import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/home/ui/archive_grow_room_card.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
-/// A widget that displays a grid of archived grow rooms.
-///
-/// It listens to the [HomeViewModel] to display a filtered list of
-/// grow rooms and handles the empty state.
 class ArchivedCropsSection extends StatelessWidget {
   static const int _gridCrossAxisCount = 3;
   static const double _cardAspectRatio = 1.0;

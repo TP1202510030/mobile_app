@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
+import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_data_use_case.dart';
+import 'package:mobile_app/utils/result.dart';
 
 class FinishedCropsViewModel extends ChangeNotifier {
   final int growRoomId;
-  //final GetFinishedCropsDataUseCase _getFinishedCropsDataUseCase;
+  final GetFinishedCropsDataUseCase _getFinishedCropsDataUseCase;
 
   FinishedCropsViewModel({
     required this.growRoomId,
-    //required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
-  }) /*: _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase*/ {
+    required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
+  }) : _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase {
     fetchAllData();
   }
 
@@ -39,19 +41,21 @@ class FinishedCropsViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {
-      /*
-      final data = await _getFinishedCropsDataUseCase(growRoomId);
-      _allFinishedCrops = data.finishedCrops;
-      _growRoomName = data.growRoomName;*/
-    } catch (e) {
-      _error = 'Ocurrió un error al cargar los datos: ${e.toString()}';
-      _allFinishedCrops = [];
-      _growRoomName = '';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    final result = await _getFinishedCropsDataUseCase(growRoomId);
+
+    switch (result) {
+      case Success(value: final data):
+        _allFinishedCrops = data.finishedCrops;
+        _growRoomName = data.growRoomName;
+        break;
+      case Error(error: final e):
+        _error = 'Ocurrió un error al cargar los datos: ${e.toString()}';
+        _allFinishedCrops = [];
+        _growRoomName = '';
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   void setSearchQuery(String query) {

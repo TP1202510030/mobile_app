@@ -34,18 +34,24 @@ class GetFinishedCropDetailsUseCase
         }
 
         final phaseDetailFutures = crop.phases.map((phase) async {
-          final measurementsFuture =
-              _measurementRepository.getMeasurementsByPhaseId(phase.id);
-          final controlActionsFuture =
-              _controlActionRepository.getControlActionsByPhaseId(phase.id);
+          final measurementsResult =
+              await _measurementRepository.getMeasurementsByPhaseId(phase.id);
+          final controlActionsResult = await _controlActionRepository
+              .getControlActionsByPhaseId(phase.id);
 
-          final results =
-              await Future.wait([measurementsFuture, controlActionsFuture]);
+          List<Measurement> measurements =
+              measurementsResult is Success<List<Measurement>>
+                  ? measurementsResult.value
+                  : [];
+          List<ControlAction> controlActions =
+              controlActionsResult is Success<List<ControlAction>>
+                  ? controlActionsResult.value
+                  : [];
 
           return PhaseDetails(
             phase: phase,
-            measurements: results[0] as List<Measurement>,
-            controlActions: results[1] as List<ControlAction>,
+            measurements: measurements,
+            controlActions: controlActions,
           );
         }).toList();
 

@@ -1,86 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
+import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/search_bar.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/locator.dart';
 
 class FinishedCropsScreen extends StatelessWidget {
-  final FinishedCropsViewModel viewModel;
+  final int growRoomId;
 
-  const FinishedCropsScreen({super.key, required this.viewModel});
+  const FinishedCropsScreen({super.key, required this.growRoomId});
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, _) {
-        if (viewModel.isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return ChangeNotifierProvider(
+      create: (_) => locator<FinishedCropsViewModel>(param1: growRoomId),
+      child: Consumer<FinishedCropsViewModel>(
+        builder: (context, viewModel, _) {
+          if (viewModel.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (viewModel.error != null) {
-          return Center(child: Text(viewModel.error!));
-        }
+          if (viewModel.error != null) {
+            return Center(child: Text(viewModel.error!));
+          }
 
-        final crops = viewModel.finishedCrops;
+          final crops = viewModel.finishedCrops;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(viewModel.growRoomName,
-                  style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 16),
-              CustomSearchBar(
-                controller: viewModel.searchController,
-                hintText: 'Buscar por ID de cultivo...',
-                onChanged: viewModel.setSearchQuery,
-                onClear: () => viewModel.setSearchQuery(''),
-              ),
-              const SizedBox(height: 24),
-              if (crops.isEmpty && viewModel.searchQuery.isNotEmpty)
-                Expanded(
-                  child: Center(
-                    child: Text(
-                        'No se encontró el cultivo "${viewModel.searchQuery}"'),
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(viewModel.growRoomName,
+                  style: Theme.of(context).textTheme.headlineMedium),
+            ),
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
+                  CustomSearchBar(
+                    controller: viewModel.searchController,
+                    hintText: 'Buscar por ID de cultivo...',
+                    onChanged: viewModel.setSearchQuery,
+                    onClear: () => viewModel.setSearchQuery(''),
                   ),
-                )
-              else if (crops.isEmpty)
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        AppIcons.mushroom,
-                        width: 64.0,
-                        height: 64.0,
-                        colorFilter: ColorFilter.mode(
-                          Theme.of(context).colorScheme.onSurface,
-                          BlendMode.srcIn,
-                        ),
+                  const SizedBox(height: 24),
+                  if (crops.isEmpty && viewModel.searchQuery.isNotEmpty)
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                            'No se encontró el cultivo "${viewModel.searchQuery}"'),
                       ),
-                      const SizedBox(height: 12),
-                      Text('No hay cultivos finalizados',
-                          style: Theme.of(context).textTheme.bodyLarge),
-                    ],
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: crops.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
-                    itemBuilder: (context, index) =>
-                        _FinishedCropCard(crop: crops[index]),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+                    )
+                  else if (crops.isEmpty)
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.asset(
+                            AppIcons.mushroom,
+                            width: 64.0,
+                            height: 64.0,
+                            colorFilter: ColorFilter.mode(
+                              Theme.of(context).colorScheme.onSurface,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text('No hay cultivos finalizados',
+                              style: Theme.of(context).textTheme.bodyLarge),
+                        ],
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: crops.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        itemBuilder: (context, index) =>
+                            _FinishedCropCard(crop: crops[index]),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -100,10 +111,11 @@ class _FinishedCropCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        /*
-        final path =
-            Routes.finishedCropDetail.replaceAll(':cropId', crop.id.toString());
-        context.push(path, extra: totalProduction);*/
+        final path = AppRoutes.finishedCropDetail(
+          growRoomId: crop.growRoomId.toString(),
+          cropId: crop.id.toString(),
+        );
+        context.push(path, extra: {'totalProduction': totalProduction});
       },
       borderRadius: BorderRadius.circular(12.0),
       child: Container(

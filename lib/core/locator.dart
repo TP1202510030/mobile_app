@@ -25,6 +25,7 @@ import 'package:mobile_app/domain/use_cases/control_action/get_control_actions_b
 import 'package:mobile_app/domain/use_cases/crop/get_crop_details_use_case.dart';
 import 'package:mobile_app/domain/use_cases/crop/get_finished_crop_details_use_case.dart';
 import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_by_grow_room_id_use_case.dart';
+import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_data_use_case.dart';
 import 'package:mobile_app/domain/use_cases/grow_room/get_grow_room_by_id_use_case.dart';
 import 'package:mobile_app/domain/use_cases/grow_room/get_grow_rooms_by_company_id_use_case.dart';
 import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phase_id_use_case.dart';
@@ -33,6 +34,8 @@ import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:mobile_app/domain/validators/create_crop_validator.dart';
 import 'package:mobile_app/ui/auth/viewmodel/login_viewmodel.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
 import 'package:mobile_app/ui/stepper/view_models/create_crop_viewmodel.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
@@ -94,6 +97,8 @@ Future<void> setupLocator() async {
       () => GetFinishedCropsByGrowRoomIdUseCase(locator()));
   locator.registerLazySingleton(
       () => GetFinishedCropDetailsUseCase(locator(), locator(), locator()));
+  locator.registerLazySingleton(
+      () => GetFinishedCropsDataUseCase(locator(), locator()));
 
   locator.registerLazySingleton(() => CreateCropValidator());
   locator.registerLazySingleton(() => CreateCropMapper());
@@ -108,7 +113,7 @@ Future<void> setupLocator() async {
 
   // --- FACTORIES (ViewModels) ---
   locator.registerFactory(() => LoginViewModel(locator()));
-  locator.registerLazySingleton(() => HomeViewModel(locator(), locator()));
+  locator.registerLazySingleton(() => HomeViewModel(locator()));
 
   locator.registerFactoryParam<CreateCropViewModel, int, void>(
       (growRoomId, _) =>
@@ -122,6 +127,20 @@ Future<void> setupLocator() async {
       getControlActionsUseCase: locator(),
       advanceCropPhaseUseCase: locator(),
       finishCropUseCase: locator(),
+    ),
+  );
+
+  locator.registerFactoryParam<FinishedCropsViewModel, int, void>(
+    (growRoomId, _) => FinishedCropsViewModel(
+      growRoomId: growRoomId,
+      getFinishedCropsDataUseCase: locator(),
+    ),
+  );
+
+  locator.registerFactoryParam<FinishedCropDetailViewModel, int, void>(
+    (cropId, _) => FinishedCropDetailViewModel(
+      cropId: cropId,
+      getFinishedCropDetailsUseCase: locator(),
     ),
   );
 }

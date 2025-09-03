@@ -7,6 +7,8 @@ import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/auth/widgets/login_screen.dart';
 import 'package:mobile_app/ui/auth/widgets/welcome_screen.dart';
 import 'package:mobile_app/ui/crop/widgets/crop_screen/crop_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crop_details_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crops_screen.dart';
 import 'package:mobile_app/ui/home/widgets/home_screen.dart';
 import 'package:mobile_app/ui/stepper/widgets/create_crop_screen.dart';
 
@@ -71,6 +73,26 @@ class AppRouter {
         );
       },
     ),
+    GoRoute(
+      name: 'finished-crops',
+      path: '${AppRoutes.archive}/:growRoomId',
+      builder: (context, state) {
+        final growRoomId = int.parse(state.pathParameters['growRoomId']!);
+        return FinishedCropsScreen(growRoomId: growRoomId);
+      },
+    ),
+    GoRoute(
+        name: 'finished-crop-details',
+        path: '${AppRoutes.archive}/:growRoomId/crop/:cropId',
+        builder: (context, state) {
+          final cropId = int.parse(state.pathParameters['cropId']!);
+          final extra = state.extra as Map<String, dynamic>?;
+          final totalProduction = extra?['totalProduction'] as String? ?? 'N/A';
+          return FinishedCropDetailsScreenWrapper(
+            cropId: cropId,
+            totalProduction: totalProduction,
+          );
+        })
   ];
 
   FutureOr<String?> _redirect(BuildContext context, GoRouterState state) async {

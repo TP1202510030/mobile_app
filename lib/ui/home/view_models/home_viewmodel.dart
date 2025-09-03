@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/config/api_constants.dart';
+import 'package:mobile_app/core/locator.dart';
 import 'package:mobile_app/domain/entities/grow_room/grow_room.dart';
 import 'package:mobile_app/domain/repositories/auth_repository.dart';
 import 'package:mobile_app/domain/use_cases/grow_room/get_grow_rooms_by_company_id_use_case.dart';
@@ -12,7 +13,8 @@ class HomeViewModel extends ChangeNotifier {
   final GetGrowRoomsByCompanyIdUseCase _getGrowRoomsUseCase;
   final AuthRepository _authRepository;
 
-  HomeViewModel(this._getGrowRoomsUseCase, this._authRepository) {
+  HomeViewModel(this._getGrowRoomsUseCase)
+      : _authRepository = locator<AuthRepository>() {
     searchController.addListener(_onSearchChanged);
   }
 
