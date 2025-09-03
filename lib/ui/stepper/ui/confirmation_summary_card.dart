@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
-import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 
 class SummaryItem {
   final String label;

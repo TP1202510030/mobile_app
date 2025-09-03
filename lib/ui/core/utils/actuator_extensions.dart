@@ -5,7 +5,7 @@ extension ActuatorUI on Actuator {
   String get label {
     switch (this) {
       case Actuator.airExtractor:
-        return 'Extractor';
+        return 'Extracción';
       case Actuator.airRecirculation:
         return 'Recirculación';
     }

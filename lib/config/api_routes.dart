@@ -23,7 +23,7 @@ abstract final class ApiRoutes {
   static const String _cropsBase = '/api/v1/crops';
   static String cropById(int cropId) => '$_cropsBase/$cropId';
   static String advanceCropPhase(int cropId) =>
-      '$_cropsBase/$cropId/advancePhase';
+      '$_cropsBase/$cropId/advance-phase';
   static String finishCrop(int cropId) => '$_cropsBase/$cropId/finish';
   static String measurementsForCurrentPhaseByCropId(int cropId) =>
       '$_cropsBase/$cropId/measurements';

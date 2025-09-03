@@ -65,7 +65,13 @@ class _GrowRoomListState extends State<GrowRoomList> {
           return GrowRoomCard(
             growRoom: growRoom,
             onTap: () {
-              // To-do
+              if (growRoom.activeCropId != null) {
+                context.push(
+                  AppRoutes.activeCrop
+                      .replaceAll(':cropId', growRoom.activeCropId.toString()),
+                  extra: {'growRoomName': growRoom.name},
+                );
+              }
             },
             onStartCrop: () {
               context.push(AppRoutes.startCreateCrop(

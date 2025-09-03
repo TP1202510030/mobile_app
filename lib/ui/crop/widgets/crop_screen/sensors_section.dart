@@ -1,138 +1,85 @@
-/*
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:mobile_app/domain/entities/measurement/parameter.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
+import 'package:mobile_app/ui/core/utils/parameter_extensions.dart';
 import 'package:mobile_app/ui/crop/ui/expansion_panel_list.dart';
 import 'package:mobile_app/ui/crop/ui/line_chart.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-class SensorsSection extends StatefulWidget {
+class SensorsSection extends StatelessWidget {
   final ActiveCropViewModel viewModel;
+  final ActiveCropSuccess state;
 
-  const SensorsSection({super.key, required this.viewModel});
-
-  @override
-  State<SensorsSection> createState() => _SensorsSectionState();
-}
-
-class _SensorsSectionState extends State<SensorsSection> {
-  final Map<Parameter, TooltipBehavior> _tooltipBehaviors = {};
+  const SensorsSection({
+    super.key,
+    required this.viewModel,
+    required this.state,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: widget.viewModel,
-      builder: (context, child) {
-        if (widget.viewModel.isPhaseDataLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (state.isPhaseDataLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        if (widget.viewModel.phaseDataError != null) {
-          return Center(
-            child: Text(
-              'Error: ${widget.viewModel.phaseDataError}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-          );
-        }
-
-        return _buildContent(context);
-      },
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    if (widget.viewModel.measurementsByParameter.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset(
-              AppIcons.sensor,
-              width: 64.0,
-              height: 64.0,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No hay mediciones para mostrar en esta fase',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ],
-        ),
+    if (state.measurementsForSelectedPhase.isEmpty) {
+      return const EmptyState(
+        message: 'No hay mediciones para mostrar en esta fase.',
+        iconAsset: AppIcons.sensor,
       );
     }
 
-    for (var param in widget.viewModel.measurementsByParameter.keys) {
-      _tooltipBehaviors.putIfAbsent(param, () => TooltipBehavior(enable: true));
-    }
+    final latestMeasurements = viewModel.measurementsByParameter.values
+        .where((list) => list.isNotEmpty)
+        .map((list) => list.last)
+        .toList();
 
-    final List<PanelItem> chartPanels =
-        widget.viewModel.measurementsByParameter.entries.map((entry) {
-      final parameter = entry.key;
-      final measurementsForParameter = entry.value;
-      final unitOfMeasurement = measurementsForParameter.isNotEmpty
-          ? measurementsForParameter.first.unitOfMeasurement
-          : '';
-      final tooltipBehavior = _tooltipBehaviors[parameter]!;
-
-      return PanelItem(
-        iconPath: parameter.iconPath,
-        title: parameter.label,
-        tooltipBehavior: tooltipBehavior,
-        body: LineChart(
-          parameterName: parameter.label,
-          unitOfMeasurement: unitOfMeasurement,
-          measurements: measurementsForParameter,
-          tooltipBehavior: tooltipBehavior,
-        ),
-      );
-    }).toList();
+    final chartPanels = viewModel.measurementsByParameter.entries
+        .map((entry) => PanelItem(
+              id: entry.key.name,
+              iconPath: entry.key.iconPath,
+              title: entry.key.label,
+              body: LineChart(
+                parameterName: entry.key.label,
+                points: entry.value
+                    .map((m) => LineChartDataPoint(x: m.timestamp, y: m.value))
+                    .toList(),
+                tooltipBehavior: TooltipBehavior(enable: true),
+              ),
+            ))
+        .toList();
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Wrap(
-              spacing: 24.0,
-              runSpacing: 16.0,
-              alignment: WrapAlignment.spaceBetween,
-              children: widget.viewModel.measurementsByParameter.values
-                  .map((measurementsList) {
-                if (measurementsList.isEmpty) return const SizedBox.shrink();
-                final latestMeasurement = measurementsList.last;
-                final parameterEnum =
-                    ParameterData.fromKey(latestMeasurement.parameter);
-                return ParameterIcon(
-                  iconPath: parameterEnum.iconPath,
-                  value: latestMeasurement.value,
-                  unitOfMeasure: latestMeasurement.unitOfMeasurement,
-                );
-              }).toList(),
+          if (state.isCurrentActivePhase) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  vertical: AppSizes.spacingSmall,
+                  horizontal: AppSizes.spacingLarge),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: latestMeasurements
+                    .map((m) => ParameterIcon(measurement: m))
+                    .toList(),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Divider(
-            height: 1,
-            thickness: 1,
-            indent: 16,
-            endIndent: 16,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.spacingLarge),
+            Divider(
+              color: Theme.of(context).colorScheme.outline,
+              height: 1,
+              thickness: 1,
+            ),
+            const SizedBox(height: AppSizes.spacingLarge),
+          ],
           CustomExpansionPanelList(items: chartPanels),
         ],
       ),
     );
   }
 }
-*/

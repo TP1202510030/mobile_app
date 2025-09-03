@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
-import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_by_grow_room_id_use_case.dart';
 
 class FinishedCropsViewModel extends ChangeNotifier {
   final int growRoomId;
@@ -40,7 +39,8 @@ class FinishedCropsViewModel extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    try {/*
+    try {
+      /*
       final data = await _getFinishedCropsDataUseCase(growRoomId);
       _allFinishedCrops = data.finishedCrops;
       _growRoomName = data.growRoomName;*/

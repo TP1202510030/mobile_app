@@ -79,7 +79,7 @@ class _ExpansionPanel extends StatelessWidget {
     final headerTextColor = theme.colorScheme.onSurface;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingSmall),
+      margin: const EdgeInsets.symmetric(vertical: AppSizes.spacingMedium),
       child: Column(
         children: [
           InkWell(

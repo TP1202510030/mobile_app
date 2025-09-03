@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:mobile_app/core/locator.dart';
 import 'package:mobile_app/domain/entities/measurement/parameter.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/mappers/create_crop_mapper.dart';
 import 'package:mobile_app/domain/use_cases/crop/create_crop_use_case.dart';
 import 'package:mobile_app/domain/validators/create_crop_validator.dart';
+import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 import 'package:mobile_app/utils/command.dart';
 
 enum CreateCropStep { frequency, phases, thresholds, confirmation }
@@ -194,6 +196,8 @@ class CreateCropViewModel extends ChangeNotifier {
   void _onCreateStatusChanged() {
     if (_createCommand.isSuccess) {
       isProcessComplete = true;
+
+      locator<HomeViewModel>().fetchInitialGrowRooms();
     } else if (_createCommand.hasError) {
       errorMessage =
           _createCommand.error?.toString() ?? 'Ocurrió un error desconocido.';

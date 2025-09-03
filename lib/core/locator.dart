@@ -32,6 +32,7 @@ import 'package:mobile_app/domain/use_cases/auth/sign_in_use_case.dart';
 import 'package:mobile_app/domain/use_cases/auth/sign_out_use_case.dart';
 import 'package:mobile_app/domain/validators/create_crop_validator.dart';
 import 'package:mobile_app/ui/auth/viewmodel/login_viewmodel.dart';
+import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 import 'package:mobile_app/ui/stepper/view_models/create_crop_viewmodel.dart';
 import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
 
@@ -93,6 +94,7 @@ Future<void> setupLocator() async {
       () => GetFinishedCropsByGrowRoomIdUseCase(locator()));
   locator.registerLazySingleton(
       () => GetFinishedCropDetailsUseCase(locator(), locator(), locator()));
+
   locator.registerLazySingleton(() => CreateCropValidator());
   locator.registerLazySingleton(() => CreateCropMapper());
 
@@ -106,8 +108,20 @@ Future<void> setupLocator() async {
 
   // --- FACTORIES (ViewModels) ---
   locator.registerFactory(() => LoginViewModel(locator()));
-  locator.registerFactory(() => HomeViewModel(locator(), locator()));
+  locator.registerLazySingleton(() => HomeViewModel(locator(), locator()));
+
   locator.registerFactoryParam<CreateCropViewModel, int, void>(
       (growRoomId, _) =>
           CreateCropViewModel(growRoomId, locator(), locator(), locator()));
+
+  locator.registerFactoryParam<ActiveCropViewModel, int, void>(
+    (cropId, _) => ActiveCropViewModel(
+      cropId: cropId,
+      getCropDetailsUseCase: locator(),
+      getMeasurementsUseCase: locator(),
+      getControlActionsUseCase: locator(),
+      advanceCropPhaseUseCase: locator(),
+      finishCropUseCase: locator(),
+    ),
+  );
 }

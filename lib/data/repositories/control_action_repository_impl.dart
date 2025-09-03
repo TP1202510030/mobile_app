@@ -1,7 +1,9 @@
 import 'package:mobile_app/config/api_constants.dart';
+import 'package:mobile_app/core/exceptions/api_exception.dart';
 import 'package:mobile_app/data/services/api/control_action_service.dart';
 import 'package:mobile_app/domain/entities/control_action/control_action.dart';
 import 'package:mobile_app/domain/repositories/control_action_repository.dart';
+import 'package:mobile_app/utils/result.dart';
 
 /// Concrete implementation of [ControlActionRepository].
 class ControlActionRepositoryImpl implements ControlActionRepository {
@@ -26,15 +28,15 @@ class ControlActionRepositoryImpl implements ControlActionRepository {
   }
 
   @override
-  Future<List<ControlAction>> getControlActionsByPhaseId(
+  Future<Result<List<ControlAction>>> getControlActionsByPhaseId(
       int cropPhaseId) async {
     try {
       final pagedResult =
           await _controlActionService.getControlActionsByCropPhaseId(
               cropPhaseId, _defaultPage, _defaultPageSize);
-      return pagedResult.content;
-    } catch (e) {
-      return [];
+      return Result.success(pagedResult.content);
+    } on ApiException catch (e) {
+      return Result.error(e);
     }
   }
 }

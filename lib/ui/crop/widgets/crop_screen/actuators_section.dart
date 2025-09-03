@@ -1,69 +1,47 @@
-/*
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/entities/control_action/actuator.dart';
 import 'package:mobile_app/domain/entities/control_action/control_action.dart';
-import 'package:mobile_app/ui/core/themes/colors.dart';
+import 'package:mobile_app/domain/entities/control_action/control_action_type.dart';
+import 'package:mobile_app/ui/core/themes/app_accent_colors.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/actuator_icon.dart';
+import 'package:mobile_app/ui/core/ui/empty_state.dart';
+import 'package:mobile_app/ui/core/utils/actuator_extensions.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 
 class ActuatorsSection extends StatelessWidget {
   final ActiveCropViewModel viewModel;
-  const ActuatorsSection({super.key, required this.viewModel});
+  final ActiveCropSuccess state;
+
+  const ActuatorsSection({
+    super.key,
+    required this.viewModel,
+    required this.state,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) {
-        if (viewModel.isPhaseDataLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (state.isPhaseDataLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        if (viewModel.phaseDataError != null) {
-          return Center(child: Text(viewModel.phaseDataError!));
-        }
-
-        return _buildContent(context);
-      },
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    if (viewModel.actionsGroupedByDate.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SvgPicture.asset(
-              AppIcons.actuator,
-              width: 64.0,
-              height: 64.0,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No hay acciones de control para mostrar en esta fase',
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    if (state.actionsForSelectedPhase.isEmpty) {
+      return const EmptyState(
+        message: 'No hay acciones de control para mostrar en esta fase.',
+        iconAsset: AppIcons.actuator,
       );
     }
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          children: [
-            _CurrentStatusSection(viewModel: viewModel),
-            const SizedBox(height: 24),
-            _HistorySection(viewModel: viewModel),
-          ],
-        ),
+      child: Column(
+        children: [
+          _CurrentStatusSection(viewModel: viewModel),
+          const SizedBox(height: AppSizes.spacingExtraLarge),
+          _HistorySection(viewModel: viewModel),
+        ],
       ),
     );
   }
@@ -78,63 +56,52 @@ class _CurrentStatusSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Estado Actual',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        const SizedBox(height: 16),
+        Text('Estado Actual', style: Theme.of(context).textTheme.bodyLarge),
+        const SizedBox(height: AppSizes.spacingLarge),
         Divider(
+          color: Theme.of(context).colorScheme.outline,
           height: 1,
           thickness: 1,
-          color: Theme.of(context).colorScheme.outline,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSizes.spacingExtraLarge),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: viewModel.latestActuatorStates.entries.map((entry) {
-            return _ActuatorStatusWidget(
-              actuator: entry.key,
-              latestAction: entry.value,
-            );
-          }).toList(),
+          children: viewModel.latestActuatorStates.entries
+              .map((entry) => _ActuatorStatus(
+                    actuator: entry.key,
+                    latestAction: entry.value,
+                  ))
+              .toList(),
         ),
       ],
     );
   }
 }
 
-class _ActuatorStatusWidget extends StatelessWidget {
+class _ActuatorStatus extends StatelessWidget {
   final Actuator actuator;
   final ControlAction? latestAction;
-
-  const _ActuatorStatusWidget({required this.actuator, this.latestAction});
+  const _ActuatorStatus({required this.actuator, this.latestAction});
 
   @override
   Widget build(BuildContext context) {
-    final bool isActive = latestAction?.controlActionType == 'ACTIVATED';
+    final theme = Theme.of(context);
+    final bool isActive =
+        latestAction?.controlActionType == ControlActionType.activated;
     final statusText = isActive ? 'On' : 'Off';
-    final statusColor =
-        isActive ? AppColors.accent : Theme.of(context).colorScheme.secondary;
+    final statusColor = isActive
+        ? theme.extension<AppAccentColors>()!.accent!
+        : theme.colorScheme.secondary;
 
     return Column(
       children: [
-        SvgPicture.asset(
-          actuator.iconPath,
-          width: 60,
-          height: 60,
-          colorFilter: ColorFilter.mode(
-            statusColor,
-            BlendMode.srcIn,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(actuator.label, style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 4),
+        ActuatorIcon(actuator: actuator, isActive: isActive, size: 60),
+        const SizedBox(height: AppSizes.spacingMedium),
+        Text(actuator.label, style: theme.textTheme.bodyMedium),
+        const SizedBox(height: AppSizes.spacingSmall),
         Text(
           statusText,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
+          style: theme.textTheme.titleMedium
               ?.copyWith(color: statusColor, fontWeight: FontWeight.bold),
         ),
       ],
@@ -146,78 +113,79 @@ class _HistorySection extends StatelessWidget {
   final ActiveCropViewModel viewModel;
   const _HistorySection({required this.viewModel});
 
-  String _buildHistoryDescription(ControlAction action) {
-    final actuatorLabel =
-        ActuatorData.fromKey(action.actuatorType).label.toLowerCase();
-    final actionType = action.controlActionType == 'ACTIVATED'
-        ? 'Se activó el sistema de'
-        : 'Se desactivó el sistema de';
-    return '$actionType $actuatorLabel.';
-  }
-
   @override
   Widget build(BuildContext context) {
     final groupedActions = viewModel.actionsGroupedByDate;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Historial de acciones',
             style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.spacingLarge),
         Divider(
+          color: Theme.of(context).colorScheme.outline,
           height: 1,
           thickness: 1,
-          color: Theme.of(context).colorScheme.outline,
         ),
-        const SizedBox(height: 16),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: groupedActions.keys.length,
           itemBuilder: (context, index) {
             final dateHeader = groupedActions.keys.elementAt(index);
-            final actionsForDate = groupedActions[dateHeader]!;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    dateHeader,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ...actionsForDate.map((action) {
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      action.controlActionType == 'ACTIVATED'
-                          ? Icons.play_circle_fill_outlined
-                          : Icons.pause_circle_outline,
-                      color: action.controlActionType == 'ACTIVATED'
-                          ? AppColors.accent
-                          : Theme.of(context).colorScheme.secondary,
-                    ),
-                    title: Text(_buildHistoryDescription(action),
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    trailing: Text(
-                      DateFormat('h:mm a', 'es_ES')
-                          .format(action.timestamp.toLocal()),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  );
-                }),
-              ],
-            );
+            final actions = groupedActions[dateHeader]!;
+            return _HistoryDateGroup(date: dateHeader, actions: actions);
           },
         ),
       ],
     );
   }
 }
-*/
+
+class _HistoryDateGroup extends StatelessWidget {
+  final String date;
+  final List<ControlAction> actions;
+  const _HistoryDateGroup({required this.date, required this.actions});
+
+  String _buildDescription(ControlAction action) {
+    final actionType = action.controlActionType == ControlActionType.activated
+        ? 'Se activó'
+        : 'Se desactivó';
+    return '$actionType el sistema de ${action.actuatorType.label.toLowerCase()}.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.spacingLarge),
+          child: Text(date,
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold)),
+        ),
+        ...actions.map((action) {
+          final isActive =
+              action.controlActionType == ControlActionType.activated;
+          return ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              isActive ? Icons.play_arrow_rounded : Icons.pause_rounded,
+              color: isActive
+                  ? theme.extension<AppAccentColors>()!.accent
+                  : theme.colorScheme.secondary,
+            ),
+            title: Text(_buildDescription(action),
+                style: theme.textTheme.bodyMedium),
+            trailing: Text(
+              DateFormat('h:mm a', 'es_ES').format(action.timestamp.toLocal()),
+              style: theme.textTheme.bodySmall,
+            ),
+          );
+        })
+      ],
+    );
+  }
+}

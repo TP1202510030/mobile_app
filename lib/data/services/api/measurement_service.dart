@@ -44,6 +44,11 @@ class MeasurementService {
           'size': size,
         },
       );
+
+      if (response.data is! Map<String, dynamic>) {
+        return PagedResult.empty();
+      }
+
       return PagedResult.fromJson(
           response.data, (json) => Measurement.fromJson(json));
     } on DioException catch (e) {

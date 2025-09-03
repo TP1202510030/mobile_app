@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
-import 'package:mobile_app/domain/entities/measurement/parameter.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
-import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
 
 class FinishedCropDetailsScreen extends StatelessWidget {

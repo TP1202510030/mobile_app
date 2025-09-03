@@ -3,6 +3,7 @@ import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 
+@immutable
 class LineChartDataPoint {
   final DateTime x;
   final double y;
@@ -21,6 +22,20 @@ class LineChart extends StatelessWidget {
     required this.points,
     required this.tooltipBehavior,
   });
+
+  static const Duration _startPointOffset = Duration(hours: 4);
+
+  List<LineChartDataPoint> _getChartPoints() {
+    if (points.length == 1) {
+      final singlePoint = points.first;
+      final startPoint = LineChartDataPoint(
+        x: singlePoint.x.subtract(_startPointOffset),
+        y: 0,
+      );
+      return [startPoint, singlePoint];
+    }
+    return points;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +61,8 @@ class LineChart extends StatelessWidget {
   }
 
   Widget _buildChart(BuildContext context) {
+    final chartPoints = _getChartPoints();
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       elevation: 0.0,
@@ -63,22 +80,32 @@ class LineChart extends StatelessWidget {
           child: SfCartesianChart(
             primaryXAxis: DateTimeAxis(
               intervalType: DateTimeIntervalType.hours,
-              interval: 4,
+              interval: 8,
               dateFormat: DateFormat.Hm(),
-              edgeLabelPlacement: EdgeLabelPlacement.shift,
+              majorGridLines: const MajorGridLines(width: 1),
+              axisLabelFormatter: (args) => ChartAxisLabel('', null),
             ),
             primaryYAxis: NumericAxis(),
             tooltipBehavior: tooltipBehavior,
             series: <CartesianSeries<LineChartDataPoint, DateTime>>[
               LineSeries<LineChartDataPoint, DateTime>(
-                dataSource: points,
+                dataSource: chartPoints,
                 xValueMapper: (LineChartDataPoint point, _) =>
                     point.x.toLocal(),
                 yValueMapper: (LineChartDataPoint point, _) => point.y,
                 name: parameterName,
                 color: Theme.of(context).colorScheme.primary,
                 markerSettings: const MarkerSettings(isVisible: true),
-                dataLabelSettings: const DataLabelSettings(isVisible: true),
+                dataLabelSettings: DataLabelSettings(
+                  isVisible: true,
+                  builder: (dynamic data, dynamic point, dynamic series,
+                      int pointIndex, int seriesIndex) {
+                    if (chartPoints.length == 2 && pointIndex == 0) {
+                      return const SizedBox.shrink();
+                    }
+                    return Text(data.y.toStringAsFixed(1));
+                  },
+                ),
                 animationDuration: 0,
               ),
             ],

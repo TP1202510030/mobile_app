@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
-import 'package:mobile_app/routing/routes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 import 'package:mobile_app/ui/core/ui/search_bar.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crops_viewmodel.dart';
-import 'package:go_router/go_router.dart';
 
 class FinishedCropsScreen extends StatelessWidget {
   final FinishedCropsViewModel viewModel;
@@ -101,7 +99,8 @@ class _FinishedCropCard extends StatelessWidget {
     final totalProduction = crop.totalProduction?.toStringAsFixed(2) ?? 'N/A';
 
     return InkWell(
-      onTap: () {/*
+      onTap: () {
+        /*
         final path =
             Routes.finishedCropDetail.replaceAll(':cropId', crop.id.toString());
         context.push(path, extra: totalProduction);*/

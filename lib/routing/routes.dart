@@ -7,7 +7,7 @@ abstract final class AppRoutes {
 
   // --- Main Application / Base Routes ---
   static const home = '/'; // The default screen after login
-  static const activeCrops = '/active-crops';
+  static const activeCrop = '/crop/:cropId';
   static const archive = '/archive';
   static const notifications = '/notifications';
 
@@ -26,10 +26,8 @@ abstract final class AppRoutes {
   // for navigation calls, preventing typos.
   // Example usage: context.go(AppRoutes.createCrop(growRoomId: '123'));
 
-  /// Path: /active-crops/:growRoomId/crop/:cropId
-  static String cropDetail(
-          {required String growRoomId, required String cropId}) =>
-      '$activeCrops/$growRoomId/crop/$cropId';
+  /// Path: /crop/:cropId
+  static String cropDetail({required String cropId}) => '/crop/$cropId';
 
   /// Path: /archive/:growRoomId
   static String finishedCropList({required String growRoomId}) =>
