@@ -1,30 +1,69 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:go_router/go_router.dart';
+import 'package:mobile_app/domain/repositories/auth_repository.dart';
 import 'package:mobile_app/main.dart';
+import 'package:mobile_app/utils/result.dart';
+
+class FakeAuthRepository extends ChangeNotifier implements AuthRepository {
+  bool _isAuthenticated = false;
+  bool _isInitialized = true;
+
+  @override
+  bool get isAuthenticated => _isAuthenticated;
+
+  @override
+  bool get isInitialized => _isInitialized;
+
+  @override
+  int? get companyId => _isAuthenticated ? 1 : null;
+
+  @override
+  Future<void> initialize() async {
+    _isInitialized = true;
+    notifyListeners();
+  }
+
+  @override
+  Future<String?> getToken() async => _isAuthenticated ? 'fake_token' : null;
+
+  @override
+  Future<Result<void>> signIn(
+      {required String username, required String password}) async {
+    _isAuthenticated = true;
+    notifyListeners();
+    return const Result.success(null);
+  }
+
+  @override
+  Future<Result<void>> signOut() async {
+    _isAuthenticated = false;
+    notifyListeners();
+    return const Result.success(null);
+  }
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App starts without crashing', (WidgetTester tester) async {
+    final fakeAuthRepository = FakeAuthRepository();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final testRouter = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const Scaffold(
+            body: Center(child: Text('Test Home')),
+          ),
+        ),
+      ],
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.pumpWidget(MyApp(
+      authRepository: fakeAuthRepository,
+      routerConfig: testRouter,
+    ));
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Test Home'), findsOneWidget);
   });
 }

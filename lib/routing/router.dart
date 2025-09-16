@@ -1,100 +1,110 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/grow_room_service.dart';
-import 'package:mobile_app/data/services/api/model/grow_room/measurement_service.dart';
-import 'package:mobile_app/ui/core/layouts/base_layout.dart';
-import 'package:mobile_app/ui/core/themes/icons.dart';
-import 'package:mobile_app/ui/crop/view_models/crop_viewmodel.dart';
-import 'package:mobile_app/ui/crop/widgets/crop_screen.dart';
-import 'package:mobile_app/ui/home/view_models/home_viewmodel.dart';
-import 'package:mobile_app/ui/notifications/widgets/notifications_screen.dart';
+import 'package:mobile_app/domain/repositories/auth_repository.dart';
+import 'package:mobile_app/routing/routes.dart';
+import 'package:mobile_app/ui/auth/widgets/login_screen.dart';
+import 'package:mobile_app/ui/auth/widgets/welcome_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/crop_screen/crop_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crop_details_screen.dart';
+import 'package:mobile_app/ui/crop/widgets/finished_crop_screen/finished_crops_screen.dart';
+import 'package:mobile_app/ui/home/widgets/home_screen.dart';
+import 'package:mobile_app/ui/stepper/widgets/create_crop_screen.dart';
 
-import '../ui/home/widgets/home_screen.dart';
-import 'routes.dart';
+/// La clase de configuración del enrutador principal para la aplicación.
+///
+/// Utiliza GoRouter para gestionar la navegación y aplica una lógica de redirección
+/// basada en el estado de autenticación del usuario.
+class AppRouter {
+  AppRouter({required AuthRepository authRepository})
+      : _authRepository = authRepository;
 
-CustomTransitionPage<T> buildPageWithoutAnimation<T>({
-  required BuildContext context,
-  required GoRouterState state,
-  required Widget child,
-}) {
-  return CustomTransitionPage<T>(
-    key: state.pageKey,
-    child: child,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return child;
-    },
+  final AuthRepository _authRepository;
+
+  static const Set<String> _publicPaths = {
+    AppRoutes.welcome,
+    AppRoutes.login,
+  };
+
+  late final GoRouter router = GoRouter(
+    debugLogDiagnostics: kDebugMode,
+    initialLocation: AppRoutes.welcome,
+    refreshListenable: _authRepository,
+    routes: _routes,
+    redirect: _redirect,
   );
+
+  static final List<RouteBase> _routes = <RouteBase>[
+    GoRoute(
+      name: 'welcome',
+      path: AppRoutes.welcome,
+      builder: (context, state) => const WelcomeScreen(),
+    ),
+    GoRoute(
+      name: 'login',
+      path: AppRoutes.login,
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      name: 'home',
+      path: AppRoutes.home,
+      builder: (context, state) => const HomeScreen(),
+    ),
+    GoRoute(
+      name: 'create-crop',
+      path: AppRoutes.createCrop,
+      builder: (context, state) {
+        final growRoomId = int.parse(state.pathParameters['growRoomId']!);
+        return CreateCropScreen(growRoomId: growRoomId);
+      },
+    ),
+    GoRoute(
+      name: 'active-crop',
+      path: AppRoutes.activeCrop,
+      builder: (context, state) {
+        final cropId = int.parse(state.pathParameters['cropId']!);
+        final extra = state.extra as Map<String, dynamic>?;
+        final growRoomName =
+            extra?['growRoomName'] as String? ?? 'Cultivo Activo';
+        return CropScreen(
+          cropId: cropId,
+          growRoomName: growRoomName,
+        );
+      },
+    ),
+    GoRoute(
+      name: 'finished-crops',
+      path: '${AppRoutes.archive}/:growRoomId',
+      builder: (context, state) {
+        final growRoomId = int.parse(state.pathParameters['growRoomId']!);
+        return FinishedCropsScreen(growRoomId: growRoomId);
+      },
+    ),
+    GoRoute(
+        name: 'finished-crop-details',
+        path: '${AppRoutes.archive}/:growRoomId/crop/:cropId',
+        builder: (context, state) {
+          final cropId = int.parse(state.pathParameters['cropId']!);
+          final extra = state.extra as Map<String, dynamic>?;
+          final totalProduction = extra?['totalProduction'] as String? ?? 'N/A';
+          return FinishedCropDetailsScreenWrapper(
+            cropId: cropId,
+            totalProduction: totalProduction,
+          );
+        })
+  ];
+
+  FutureOr<String?> _redirect(BuildContext context, GoRouterState state) async {
+    if (!_authRepository.isInitialized) return null;
+
+    final bool isLoggedIn = _authRepository.isAuthenticated;
+    final String path = state.matchedLocation;
+    final bool isPublic = _publicPaths.contains(path);
+
+    if (isLoggedIn && isPublic) return AppRoutes.home;
+    if (!isLoggedIn && !isPublic) return AppRoutes.welcome;
+
+    return null;
+  }
 }
-
-GoRouter router() => GoRouter(
-      initialLocation: Routes.home,
-      routes: [
-        GoRoute(
-          path: Routes.home,
-          pageBuilder: (context, state) {
-            final viewModel = HomeViewModel(
-                GrowRoomService(baseUrl: 'http://localhost:3000'));
-            viewModel.hasNotification =
-                true; // To be replaced with actual logic
-            viewModel.onNotificationTap = () {
-              context.push(Routes.notifications);
-            };
-
-            return buildPageWithoutAnimation<void>(
-              context: context,
-              state: state,
-              child: BaseLayout(
-                title: 'Bienvenido a Greenhouse',
-                actions: [
-                  InkWell(
-                    onTap: viewModel.handleNotificationTap,
-                    child: NotificationIcon(
-                      icon: AppIcons.bell,
-                      hasNotification: viewModel.hasNotification,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                body: HomeScreen(viewModel: viewModel),
-              ),
-            );
-          },
-        ),
-        GoRoute(
-          path: Routes.notifications,
-          pageBuilder: (context, state) {
-            return buildPageWithoutAnimation<void>(
-              context: context,
-              state: state,
-              child: const BaseLayout(
-                title: 'Notificaciones',
-                showBackButton: true,
-                body: NotificationScreen(),
-              ),
-            );
-          },
-        ),
-        GoRoute(
-          name: 'crop',
-          path: Routes.crop,
-          pageBuilder: (context, state) {
-            final cropIdString = state.pathParameters['cropId']!;
-            final cropId = int.parse(cropIdString);
-
-            final measurementService =
-                MeasurementService(baseUrl: 'http://localhost:3000');
-
-            final viewModel = CropViewModel(cropId, measurementService);
-
-            return buildPageWithoutAnimation<void>(
-              context: context,
-              state: state,
-              child: BaseLayout(
-                title: 'Nave $cropIdString',
-                body: CropScreen(viewModel: viewModel),
-              ),
-            );
-          },
-        ),
-      ],
-    );

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/ui/core/themes/app_accent_colors.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/colors.dart';
 
 abstract final class AppTheme {
@@ -38,11 +40,11 @@ abstract final class AppTheme {
       fontFamily: 'Roboto',
     ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSmall),
       borderSide: const BorderSide(color: AppColors.border),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSmall),
       borderSide: const BorderSide(color: AppColors.primary),
     ),
     filled: true,
@@ -60,22 +62,34 @@ abstract final class AppTheme {
       borderSide: const BorderSide(color: AppColors.borderDark),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(AppSizes.borderRadiusSmall),
       borderSide: const BorderSide(color: AppColors.primaryDark),
     ),
     filled: true,
     fillColor: AppColors.black,
   );
 
+  static final _lightExtensions = [
+    const AppAccentColors(accent: AppColors.accent),
+  ];
+
+  static final _darkExtensions = [
+    const AppAccentColors(accent: AppColors.accentDark),
+  ];
+
   static ThemeData lightTheme = ThemeData(
-      brightness: Brightness.light,
-      colorScheme: AppColors.lightColorScheme,
-      textTheme: _textTheme,
-      inputDecorationTheme: _lightInputDecorationTheme);
+    brightness: Brightness.light,
+    colorScheme: AppColors.lightColorScheme,
+    textTheme: _textTheme,
+    inputDecorationTheme: _lightInputDecorationTheme,
+    extensions: _lightExtensions,
+  );
 
   static ThemeData darkTheme = ThemeData(
-      brightness: Brightness.dark,
-      colorScheme: AppColors.darkColorScheme,
-      textTheme: _textTheme,
-      inputDecorationTheme: _darkInputDecorationTheme);
+    brightness: Brightness.dark,
+    colorScheme: AppColors.darkColorScheme,
+    textTheme: _textTheme,
+    inputDecorationTheme: _darkInputDecorationTheme,
+    extensions: _darkExtensions,
+  );
 }

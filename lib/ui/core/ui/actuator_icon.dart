@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:mobile_app/domain/entities/control_action/actuator.dart';
+import 'package:mobile_app/ui/core/themes/app_accent_colors.dart';
+import 'package:mobile_app/ui/core/themes/app_sizes.dart';
+import 'package:mobile_app/ui/core/utils/actuator_extensions.dart';
 
 class ActuatorIcon extends StatelessWidget {
-  final String iconPath;
+  final Actuator actuator;
   final bool isActive;
+  final double size;
+
   const ActuatorIcon({
     super.key,
-    required this.iconPath,
+    required this.actuator,
     required this.isActive,
+    this.size = AppSizes.iconSizeMedium,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = Theme.of(context).extension<AppAccentColors>()!.accent;
+    final inactiveColor = Theme.of(context).colorScheme.outline;
+
     return SvgPicture.asset(
-      iconPath,
-      width: 32.0,
-      height: 32.0,
+      actuator.iconPath,
+      width: size,
+      height: size,
       colorFilter: ColorFilter.mode(
-        isActive
-            ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.outline,
+        isActive ? accentColor! : inactiveColor,
         BlendMode.srcIn,
       ),
     );
