@@ -198,7 +198,7 @@ class _FrequencyPickerSheetState extends State<_FrequencyPickerSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Set Frequency', style: theme.textTheme.titleMedium),
+            Text('Definir frecuencia', style: theme.textTheme.titleMedium),
             const SizedBox(height: 16),
             Row(
               children: [

@@ -23,6 +23,29 @@ class GetFinishedCropDetailsUseCase
     this._controlActionRepository,
   );
 
+  Future<List<Measurement>> _fetchAllMeasurementsForPhase(int phaseId) async {
+    final allMeasurements = <Measurement>[];
+    int currentPage = 0;
+    bool isLastPage = false;
+
+    while (!isLastPage) {
+      final result = await _measurementRepository.getMeasurementsByPhaseId(
+        phaseId,
+        currentPage,
+        ApiConstants.defaultPageSize,
+      );
+
+      if (result is Success<PagedResult<Measurement>>) {
+        allMeasurements.addAll(result.value.content);
+        isLastPage = result.value.isLast;
+        currentPage++;
+      } else {
+        isLastPage = true;
+      }
+    }
+    return allMeasurements;
+  }
+
   @override
   Future<Result<FinishedCropDetails>> call(
       GetFinishedCropDetailsParams params) async {
@@ -36,8 +59,8 @@ class GetFinishedCropDetailsUseCase
         }
 
         final phaseDetailFutures = crop.phases.map((phase) async {
-          final measurementsResult =
-              await _measurementRepository.getMeasurementsByPhaseId(phase.id);
+          final measurements = await _fetchAllMeasurementsForPhase(phase.id);
+
           final controlActionsResult =
               await _controlActionRepository.getControlActionsByPhaseId(
             phase.id,
@@ -45,10 +68,6 @@ class GetFinishedCropDetailsUseCase
             ApiConstants.defaultPageSize,
           );
 
-          List<Measurement> measurements =
-              measurementsResult is Success<List<Measurement>>
-                  ? measurementsResult.value
-                  : [];
           List<ControlAction> controlActions =
               controlActionsResult is Success<PagedResult<ControlAction>>
                   ? controlActionsResult.value.content

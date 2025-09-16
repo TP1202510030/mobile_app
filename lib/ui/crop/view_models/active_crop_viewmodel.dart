@@ -18,6 +18,10 @@ import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phas
 import 'package:mobile_app/utils/command.dart';
 import 'package:mobile_app/utils/result.dart';
 
+abstract final class MeasurementConstants {
+  static const int pageSize = 25;
+}
+
 @immutable
 sealed class ActiveCropState {
   const ActiveCropState();
@@ -36,11 +40,14 @@ class ActiveCropSuccess extends ActiveCropState {
   final Crop crop;
   final int selectedPhaseIndex;
   final bool isPhaseDataLoading;
-  final Map<int, List<Measurement>> measurementsCache;
+  final Map<int, PagedResult<Measurement>> measurementsCache;
   final Map<int, PagedResult<ControlAction>> actionsCache;
   final Map<int, bool> hasMoreActions;
   final Map<int, int> actionsPage;
+  final Map<int, bool> hasMoreMeasurements;
+  final Map<int, int> measurementsPage;
   final bool isFetchingMoreActions;
+  final bool isFetchingMoreMeasurements;
   final Map<Actuator, String> actuatorStates;
 
   const ActiveCropSuccess({
@@ -51,13 +58,18 @@ class ActiveCropSuccess extends ActiveCropState {
     this.actionsCache = const {},
     this.hasMoreActions = const {},
     this.actionsPage = const {},
+    this.hasMoreMeasurements = const {},
+    this.measurementsPage = const {},
     this.isFetchingMoreActions = false,
+    this.isFetchingMoreMeasurements = false,
     this.actuatorStates = const {},
   });
 
   CropPhase get selectedPhase => crop.phases[selectedPhaseIndex];
+
   List<Measurement> get measurementsForSelectedPhase =>
-      measurementsCache[selectedPhase.id] ?? [];
+      measurementsCache[selectedPhase.id]?.content ?? [];
+
   List<ControlAction> get actionsForSelectedPhase =>
       actionsCache[selectedPhase.id]?.content ?? [];
 
@@ -70,11 +82,14 @@ class ActiveCropSuccess extends ActiveCropState {
     Crop? crop,
     int? selectedPhaseIndex,
     bool? isPhaseDataLoading,
-    Map<int, List<Measurement>>? measurementsCache,
+    Map<int, PagedResult<Measurement>>? measurementsCache,
     Map<int, PagedResult<ControlAction>>? actionsCache,
     Map<int, bool>? hasMoreActions,
     Map<int, int>? actionsPage,
+    Map<int, bool>? hasMoreMeasurements,
+    Map<int, int>? measurementsPage,
     bool? isFetchingMoreActions,
+    bool? isFetchingMoreMeasurements,
     Map<Actuator, String>? actuatorStates,
   }) {
     return ActiveCropSuccess(
@@ -85,13 +100,18 @@ class ActiveCropSuccess extends ActiveCropState {
       actionsCache: actionsCache ?? this.actionsCache,
       hasMoreActions: hasMoreActions ?? this.hasMoreActions,
       actionsPage: actionsPage ?? this.actionsPage,
+      hasMoreMeasurements: hasMoreMeasurements ?? this.hasMoreMeasurements,
+      measurementsPage: measurementsPage ?? this.measurementsPage,
       isFetchingMoreActions:
           isFetchingMoreActions ?? this.isFetchingMoreActions,
+      isFetchingMoreMeasurements:
+          isFetchingMoreMeasurements ?? this.isFetchingMoreMeasurements,
       actuatorStates: actuatorStates ?? this.actuatorStates,
     );
   }
 }
 
+// ... (El resto del ViewModel)
 class _PhaseDataProcessor {
   static Map<Parameter, List<Measurement>> groupMeasurements(
       List<Measurement> measurements) {
@@ -151,7 +171,6 @@ class ActiveCropViewModel extends ChangeNotifier {
     return {};
   }
 
-  // Getter nuevo y correcto
   Map<Actuator, ControlActionType> get currentActuatorStates {
     if (_state is! ActiveCropSuccess) return {};
 
@@ -213,7 +232,6 @@ class ActiveCropViewModel extends ChangeNotifier {
     }
   }
 
-  // ... (el resto del archivo permanece igual)
   Future<void> _loadDataForSelectedPhase() async {
     if (_state is! ActiveCropSuccess) return;
     final successState = _state as ActiveCropSuccess;
@@ -229,8 +247,11 @@ class ActiveCropViewModel extends ChangeNotifier {
 
     try {
       final results = await Future.wait([
-        _getMeasurementsUseCase(
-            GetMeasurementsByPhaseIdParams(cropPhaseId: phaseId)),
+        _getMeasurementsUseCase(GetMeasurementsByPhaseIdParams(
+          cropPhaseId: phaseId,
+          page: 0,
+          size: MeasurementConstants.pageSize,
+        )),
         _getControlActionsUseCase(GetControlActionsByPhaseIdParams(
           cropPhaseId: phaseId,
           page: 0,
@@ -238,24 +259,31 @@ class ActiveCropViewModel extends ChangeNotifier {
         )),
       ]);
 
-      final measurementsResult = results[0] as Result<List<Measurement>>;
+      final measurementsResult = results[0] as Result<PagedResult<Measurement>>;
       final actionsResult = results[1] as Result<PagedResult<ControlAction>>;
 
       if (_state is! ActiveCropSuccess) return;
       final currentSuccessState = _state as ActiveCropSuccess;
 
-      var newMeasurementsCache = Map<int, List<Measurement>>.from(
+      var newMeasurementsCache = Map<int, PagedResult<Measurement>>.from(
           currentSuccessState.measurementsCache);
       var newActionsCache = Map<int, PagedResult<ControlAction>>.from(
           currentSuccessState.actionsCache);
+
+      final newHasMoreMeasurements =
+          Map<int, bool>.from(currentSuccessState.hasMoreMeasurements);
+      final newMeasurementsPage =
+          Map<int, int>.from(currentSuccessState.measurementsPage);
       final newHasMoreActions =
           Map<int, bool>.from(currentSuccessState.hasMoreActions);
       final newActionsPage =
           Map<int, int>.from(currentSuccessState.actionsPage);
 
       switch (measurementsResult) {
-        case Success(value: final measurements):
-          newMeasurementsCache[phaseId] = measurements;
+        case Success(value: final pagedResult):
+          newMeasurementsCache[phaseId] = pagedResult;
+          newHasMoreMeasurements[phaseId] = !pagedResult.isLast;
+          newMeasurementsPage[phaseId] = 0;
         case Error(error: final e):
           developer.log('Error al cargar mediciones: $e');
       }
@@ -265,7 +293,6 @@ class ActiveCropViewModel extends ChangeNotifier {
           newActionsCache[phaseId] = pagedResult;
           newHasMoreActions[phaseId] = !pagedResult.isLast;
           newActionsPage[phaseId] = 0;
-
         case Error(error: final e):
           developer.log('Error al cargar acciones de control: $e');
       }
@@ -274,6 +301,8 @@ class ActiveCropViewModel extends ChangeNotifier {
         isPhaseDataLoading: false,
         measurementsCache: newMeasurementsCache,
         actionsCache: newActionsCache,
+        hasMoreMeasurements: newHasMoreMeasurements,
+        measurementsPage: newMeasurementsPage,
         hasMoreActions: newHasMoreActions,
         actionsPage: newActionsPage,
       );
@@ -286,6 +315,72 @@ class ActiveCropViewModel extends ChangeNotifier {
     } finally {
       notifyListeners();
     }
+  }
+
+  Future<void> fetchMoreMeasurementsForSelectedPhase() async {
+    if (_state is! ActiveCropSuccess) return;
+    final successState = _state as ActiveCropSuccess;
+
+    final phaseId = successState.selectedPhase.id;
+    final hasMore = successState.hasMoreMeasurements[phaseId] ?? false;
+    if (successState.isFetchingMoreMeasurements || !hasMore) return;
+
+    _state = successState.copyWith(isFetchingMoreMeasurements: true);
+    notifyListeners();
+
+    final nextPage = (successState.measurementsPage[phaseId] ?? 0) + 1;
+
+    final result = await _getMeasurementsUseCase(
+      GetMeasurementsByPhaseIdParams(
+        cropPhaseId: phaseId,
+        page: nextPage,
+        size: MeasurementConstants.pageSize,
+      ),
+    );
+
+    if (_state is! ActiveCropSuccess) return;
+    final currentSuccessState = _state as ActiveCropSuccess;
+
+    var newMeasurementsCache = Map<int, PagedResult<Measurement>>.from(
+        currentSuccessState.measurementsCache);
+    final newHasMoreMeasurements =
+        Map<int, bool>.from(currentSuccessState.hasMoreMeasurements);
+    final newMeasurementsPage =
+        Map<int, int>.from(currentSuccessState.measurementsPage);
+
+    switch (result) {
+      case Success(value: final pagedResult):
+        final currentPagedResult = newMeasurementsCache[phaseId];
+        if (currentPagedResult != null) {
+          final updatedContent =
+              List<Measurement>.from(currentPagedResult.content)
+                ..addAll(pagedResult.content);
+
+          newMeasurementsCache[phaseId] = PagedResult(
+            content: updatedContent,
+            totalPages: pagedResult.totalPages,
+            totalElements: pagedResult.totalElements,
+            size: pagedResult.size,
+            number: pagedResult.number,
+            isLast: pagedResult.isLast,
+            isFirst: pagedResult.isFirst,
+          );
+        } else {
+          newMeasurementsCache[phaseId] = pagedResult;
+        }
+        newHasMoreMeasurements[phaseId] = !pagedResult.isLast;
+        newMeasurementsPage[phaseId] = nextPage;
+      case Error(error: final e):
+        developer.log('Error al cargar más mediciones: $e');
+    }
+
+    _state = currentSuccessState.copyWith(
+      isFetchingMoreMeasurements: false,
+      measurementsCache: newMeasurementsCache,
+      hasMoreMeasurements: newHasMoreMeasurements,
+      measurementsPage: newMeasurementsPage,
+    );
+    notifyListeners();
   }
 
   Future<void> fetchMoreActionsForSelectedPhase() async {
@@ -310,7 +405,6 @@ class ActiveCropViewModel extends ChangeNotifier {
     );
 
     if (_state is! ActiveCropSuccess) return;
-
     final currentSuccessState = _state as ActiveCropSuccess;
 
     var newActionsCache = Map<int, PagedResult<ControlAction>>.from(
@@ -341,7 +435,6 @@ class ActiveCropViewModel extends ChangeNotifier {
         }
         newHasMoreActions[phaseId] = !pagedResult.isLast;
         newActionsPage[phaseId] = nextPage;
-
       case Error(error: final e):
         developer.log('Error al cargar más acciones de control: $e');
     }

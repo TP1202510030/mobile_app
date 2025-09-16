@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
-import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/domain/use_cases/crop/get_finished_crop_details_use_case.dart';
 import 'package:mobile_app/utils/result.dart';
 
@@ -15,26 +14,24 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
     fetchCropHistory();
   }
 
-  Crop? _crop;
-  List<Measurement> _allMeasurements = [];
+  FinishedCropDetails? _data;
   bool _isLoading = true;
   String? _error;
+  int _selectedPhaseIndex = 0;
 
-  Crop? get crop => _crop;
+  FinishedCropDetails? get data => _data;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get selectedPhaseIndex => _selectedPhaseIndex;
 
-  Map<DateTime, List<Measurement>> get measurementsByDate {
-    if (_allMeasurements.isEmpty) return {};
+  Crop? get crop => _data?.crop;
+  List<PhaseDetails> get phaseDetails => _data?.phaseDetails ?? [];
+  PhaseDetails? get selectedPhaseDetails =>
+      phaseDetails.isNotEmpty ? phaseDetails[_selectedPhaseIndex] : null;
 
-    final Map<DateTime, List<Measurement>> groupedMap = {};
-    for (final measurement in _allMeasurements) {
-      final dateKey = DateUtils.dateOnly(measurement.timestamp.toLocal());
-      (groupedMap[dateKey] ??= []).add(measurement);
-    }
-
-    return groupedMap;
-  }
+  bool get canGoBack => _selectedPhaseIndex > 0;
+  bool get canGoForward =>
+      _selectedPhaseIndex < (data?.phaseDetails.length ?? 0) - 1;
 
   Future<void> fetchCropHistory() async {
     _isLoading = true;
@@ -46,9 +43,7 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
 
     switch (result) {
       case Success(value: final data):
-        _crop = data.crop;
-        _allMeasurements =
-            data.phaseDetails.expand((detail) => detail.measurements).toList();
+        _data = data;
         break;
       case Error(error: final e):
         _error = 'Ocurrió un error al cargar el historial: ${e.toString()}';
@@ -57,5 +52,20 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  void _changePhase(int newIndex) {
+    if (newIndex >= 0 && newIndex < phaseDetails.length) {
+      _selectedPhaseIndex = newIndex;
+      notifyListeners();
+    }
+  }
+
+  void goToNextPhase() {
+    if (canGoForward) _changePhase(_selectedPhaseIndex + 1);
+  }
+
+  void goToPreviousPhase() {
+    if (canGoBack) _changePhase(_selectedPhaseIndex - 1);
   }
 }

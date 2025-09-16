@@ -1,3 +1,4 @@
+import 'package:mobile_app/data/models/paged_result.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/utils/result.dart';
 
@@ -5,5 +6,6 @@ import 'package:mobile_app/utils/result.dart';
 abstract class MeasurementRepository {
   Future<List<Measurement>> getMeasurementsForCurrentPhaseByCropId(int cropId);
 
-  Future<Result<List<Measurement>>> getMeasurementsByPhaseId(int cropPhaseId);
+  Future<Result<PagedResult<Measurement>>> getMeasurementsByPhaseId(
+      int cropPhaseId, int page, int size);
 }

@@ -1,5 +1,6 @@
 import 'package:mobile_app/config/api_constants.dart';
 import 'package:mobile_app/core/exceptions/api_exception.dart';
+import 'package:mobile_app/data/models/paged_result.dart';
 import 'package:mobile_app/data/services/api/measurement_service.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/domain/repositories/measurement_repository.dart';
@@ -28,12 +29,12 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
   }
 
   @override
-  Future<Result<List<Measurement>>> getMeasurementsByPhaseId(
-      int cropPhaseId) async {
+  Future<Result<PagedResult<Measurement>>> getMeasurementsByPhaseId(
+      int cropPhaseId, int page, int size) async {
     try {
       final pagedResult = await _measurementService.getMeasurementsByPhaseId(
-          cropPhaseId, _defaultPage, _defaultPageSize);
-      return Result.success(pagedResult.content);
+          cropPhaseId, page, size);
+      return Result.success(pagedResult);
     } on ApiException catch (e) {
       return Result.error(e);
     }
