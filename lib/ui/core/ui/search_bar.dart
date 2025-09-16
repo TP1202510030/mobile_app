@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
 
@@ -7,6 +8,8 @@ class CustomSearchBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final TextEditingController? controller;
   final VoidCallback? onClear;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomSearchBar({
     super.key,
@@ -14,6 +17,8 @@ class CustomSearchBar extends StatefulWidget {
     required this.onChanged,
     this.controller,
     this.onClear,
+    this.keyboardType,
+    this.inputFormatters,
   });
 
   @override
@@ -59,6 +64,8 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
       style: Theme.of(context).textTheme.bodyMedium,
       controller: _controller,
       onChanged: widget.onChanged,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.inputFormatters,
       decoration: InputDecoration(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -98,7 +105,6 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),
           borderSide: BorderSide(color: theme.colorScheme.outline, width: 1.5),
-          
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(4),

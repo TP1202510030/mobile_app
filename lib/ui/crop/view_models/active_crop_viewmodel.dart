@@ -1,8 +1,11 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mobile_app/config/api_constants.dart';
+import 'package:mobile_app/data/models/paged_result.dart';
 import 'package:mobile_app/domain/entities/control_action/actuator.dart';
 import 'package:mobile_app/domain/entities/control_action/control_action.dart';
+import 'package:mobile_app/domain/entities/control_action/control_action_type.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/entities/crop/crop_phase.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
@@ -34,7 +37,11 @@ class ActiveCropSuccess extends ActiveCropState {
   final int selectedPhaseIndex;
   final bool isPhaseDataLoading;
   final Map<int, List<Measurement>> measurementsCache;
-  final Map<int, List<ControlAction>> actionsCache;
+  final Map<int, PagedResult<ControlAction>> actionsCache;
+  final Map<int, bool> hasMoreActions;
+  final Map<int, int> actionsPage;
+  final bool isFetchingMoreActions;
+  final Map<Actuator, String> actuatorStates;
 
   const ActiveCropSuccess({
     required this.crop,
@@ -42,13 +49,17 @@ class ActiveCropSuccess extends ActiveCropState {
     this.isPhaseDataLoading = false,
     this.measurementsCache = const {},
     this.actionsCache = const {},
+    this.hasMoreActions = const {},
+    this.actionsPage = const {},
+    this.isFetchingMoreActions = false,
+    this.actuatorStates = const {},
   });
 
   CropPhase get selectedPhase => crop.phases[selectedPhaseIndex];
   List<Measurement> get measurementsForSelectedPhase =>
       measurementsCache[selectedPhase.id] ?? [];
   List<ControlAction> get actionsForSelectedPhase =>
-      actionsCache[selectedPhase.id] ?? [];
+      actionsCache[selectedPhase.id]?.content ?? [];
 
   bool get canGoBack => selectedPhaseIndex > 0;
   bool get canGoForward => selectedPhaseIndex < crop.phases.length - 1;
@@ -60,7 +71,11 @@ class ActiveCropSuccess extends ActiveCropState {
     int? selectedPhaseIndex,
     bool? isPhaseDataLoading,
     Map<int, List<Measurement>>? measurementsCache,
-    Map<int, List<ControlAction>>? actionsCache,
+    Map<int, PagedResult<ControlAction>>? actionsCache,
+    Map<int, bool>? hasMoreActions,
+    Map<int, int>? actionsPage,
+    bool? isFetchingMoreActions,
+    Map<Actuator, String>? actuatorStates,
   }) {
     return ActiveCropSuccess(
       crop: crop ?? this.crop,
@@ -68,6 +83,11 @@ class ActiveCropSuccess extends ActiveCropState {
       isPhaseDataLoading: isPhaseDataLoading ?? this.isPhaseDataLoading,
       measurementsCache: measurementsCache ?? this.measurementsCache,
       actionsCache: actionsCache ?? this.actionsCache,
+      hasMoreActions: hasMoreActions ?? this.hasMoreActions,
+      actionsPage: actionsPage ?? this.actionsPage,
+      isFetchingMoreActions:
+          isFetchingMoreActions ?? this.isFetchingMoreActions,
+      actuatorStates: actuatorStates ?? this.actuatorStates,
     );
   }
 }
@@ -82,18 +102,6 @@ class _PhaseDataProcessor {
     groupedData.forEach(
         (_, value) => value.sort((a, b) => a.timestamp.compareTo(b.timestamp)));
     return groupedData;
-  }
-
-  static Map<Actuator, ControlAction?> getLatestActuatorStates(
-      List<ControlAction> actions) {
-    final latest = <Actuator, ControlAction>{};
-    for (var action in actions) {
-      if (!latest.containsKey(action.actuatorType) ||
-          action.timestamp.isAfter(latest[action.actuatorType]!.timestamp)) {
-        latest[action.actuatorType] = action;
-      }
-    }
-    return {for (var type in Actuator.values) type: latest[type]};
   }
 
   static Map<String, List<ControlAction>> groupActionsByDate(
@@ -143,12 +151,14 @@ class ActiveCropViewModel extends ChangeNotifier {
     return {};
   }
 
-  Map<Actuator, ControlAction?> get latestActuatorStates {
-    if (_state is ActiveCropSuccess) {
-      return _PhaseDataProcessor.getLatestActuatorStates(
-          (_state as ActiveCropSuccess).actionsForSelectedPhase);
-    }
-    return {};
+  // Getter nuevo y correcto
+  Map<Actuator, ControlActionType> get currentActuatorStates {
+    if (_state is! ActiveCropSuccess) return {};
+
+    final successState = _state as ActiveCropSuccess;
+    return successState.actuatorStates.map(
+      (key, value) => MapEntry(key, ControlActionTypeData.fromKey(value)),
+    );
   }
 
   Map<String, List<ControlAction>> get actionsGroupedByDate {
@@ -190,6 +200,7 @@ class ActiveCropViewModel extends ChangeNotifier {
         _state = ActiveCropSuccess(
           crop: details.crop,
           selectedPhaseIndex: currentPhaseIndex != -1 ? currentPhaseIndex : 0,
+          actuatorStates: details.actuatorStates,
         );
 
         notifyListeners();
@@ -202,12 +213,14 @@ class ActiveCropViewModel extends ChangeNotifier {
     }
   }
 
+  // ... (el resto del archivo permanece igual)
   Future<void> _loadDataForSelectedPhase() async {
     if (_state is! ActiveCropSuccess) return;
     final successState = _state as ActiveCropSuccess;
     final phaseId = successState.selectedPhase.id;
 
-    if (successState.measurementsCache.containsKey(phaseId)) {
+    if (successState.measurementsCache.containsKey(phaseId) &&
+        successState.actionsCache.containsKey(phaseId)) {
       return;
     }
 
@@ -218,17 +231,27 @@ class ActiveCropViewModel extends ChangeNotifier {
       final results = await Future.wait([
         _getMeasurementsUseCase(
             GetMeasurementsByPhaseIdParams(cropPhaseId: phaseId)),
-        _getControlActionsUseCase(
-            GetControlActionsByPhaseIdParams(cropPhaseId: phaseId)),
+        _getControlActionsUseCase(GetControlActionsByPhaseIdParams(
+          cropPhaseId: phaseId,
+          page: 0,
+          size: ApiConstants.defaultPageSize,
+        )),
       ]);
 
       final measurementsResult = results[0] as Result<List<Measurement>>;
-      final actionsResult = results[1] as Result<List<ControlAction>>;
+      final actionsResult = results[1] as Result<PagedResult<ControlAction>>;
 
-      var newMeasurementsCache =
-          Map<int, List<Measurement>>.from(successState.measurementsCache);
-      var newActionsCache =
-          Map<int, List<ControlAction>>.from(successState.actionsCache);
+      if (_state is! ActiveCropSuccess) return;
+      final currentSuccessState = _state as ActiveCropSuccess;
+
+      var newMeasurementsCache = Map<int, List<Measurement>>.from(
+          currentSuccessState.measurementsCache);
+      var newActionsCache = Map<int, PagedResult<ControlAction>>.from(
+          currentSuccessState.actionsCache);
+      final newHasMoreActions =
+          Map<int, bool>.from(currentSuccessState.hasMoreActions);
+      final newActionsPage =
+          Map<int, int>.from(currentSuccessState.actionsPage);
 
       switch (measurementsResult) {
         case Success(value: final measurements):
@@ -238,23 +261,98 @@ class ActiveCropViewModel extends ChangeNotifier {
       }
 
       switch (actionsResult) {
-        case Success(value: final actions):
-          newActionsCache[phaseId] = actions;
+        case Success(value: final pagedResult):
+          newActionsCache[phaseId] = pagedResult;
+          newHasMoreActions[phaseId] = !pagedResult.isLast;
+          newActionsPage[phaseId] = 0;
+
         case Error(error: final e):
           developer.log('Error al cargar acciones de control: $e');
       }
 
-      _state = successState.copyWith(
+      _state = currentSuccessState.copyWith(
         isPhaseDataLoading: false,
         measurementsCache: newMeasurementsCache,
         actionsCache: newActionsCache,
+        hasMoreActions: newHasMoreActions,
+        actionsPage: newActionsPage,
       );
     } catch (e) {
       developer.log('Error inesperado en _loadDataForSelectedPhase: $e');
-      _state = successState.copyWith(isPhaseDataLoading: false);
+      if (_state is ActiveCropSuccess) {
+        _state =
+            (_state as ActiveCropSuccess).copyWith(isPhaseDataLoading: false);
+      }
     } finally {
       notifyListeners();
     }
+  }
+
+  Future<void> fetchMoreActionsForSelectedPhase() async {
+    if (_state is! ActiveCropSuccess) return;
+    final successState = _state as ActiveCropSuccess;
+
+    final phaseId = successState.selectedPhase.id;
+    final hasMore = successState.hasMoreActions[phaseId] ?? false;
+    if (successState.isFetchingMoreActions || !hasMore) return;
+
+    _state = successState.copyWith(isFetchingMoreActions: true);
+    notifyListeners();
+
+    final nextPage = (successState.actionsPage[phaseId] ?? 0) + 1;
+
+    final result = await _getControlActionsUseCase(
+      GetControlActionsByPhaseIdParams(
+        cropPhaseId: phaseId,
+        page: nextPage,
+        size: ApiConstants.defaultPageSize,
+      ),
+    );
+
+    if (_state is! ActiveCropSuccess) return;
+
+    final currentSuccessState = _state as ActiveCropSuccess;
+
+    var newActionsCache = Map<int, PagedResult<ControlAction>>.from(
+        currentSuccessState.actionsCache);
+    final newHasMoreActions =
+        Map<int, bool>.from(currentSuccessState.hasMoreActions);
+    final newActionsPage = Map<int, int>.from(currentSuccessState.actionsPage);
+
+    switch (result) {
+      case Success(value: final pagedResult):
+        final currentPagedResult = newActionsCache[phaseId];
+        if (currentPagedResult != null) {
+          final updatedContent =
+              List<ControlAction>.from(currentPagedResult.content)
+                ..addAll(pagedResult.content);
+
+          newActionsCache[phaseId] = PagedResult(
+            content: updatedContent,
+            totalPages: pagedResult.totalPages,
+            totalElements: pagedResult.totalElements,
+            size: pagedResult.size,
+            number: pagedResult.number,
+            isLast: pagedResult.isLast,
+            isFirst: pagedResult.isFirst,
+          );
+        } else {
+          newActionsCache[phaseId] = pagedResult;
+        }
+        newHasMoreActions[phaseId] = !pagedResult.isLast;
+        newActionsPage[phaseId] = nextPage;
+
+      case Error(error: final e):
+        developer.log('Error al cargar más acciones de control: $e');
+    }
+
+    _state = currentSuccessState.copyWith(
+      isFetchingMoreActions: false,
+      actionsCache: newActionsCache,
+      hasMoreActions: newHasMoreActions,
+      actionsPage: newActionsPage,
+    );
+    notifyListeners();
   }
 
   Future<void> advancePhase() async {

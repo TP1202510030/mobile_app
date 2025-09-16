@@ -113,7 +113,7 @@ class CreateCropViewModel extends ChangeNotifier {
       _validator.isStepValid(_currentStep, _sensorActivationFrequency, _phases);
 
   void updateSensorFrequency(Duration newFrequency) {
-    if (newFrequency <= Duration.zero ||
+    if (newFrequency <= Duration(seconds: 0) ||
         _sensorActivationFrequency == newFrequency) {
       return;
     }

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-
 import 'package:intl/intl.dart';
 import 'package:mobile_app/core/locator.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
 import 'package:mobile_app/ui/core/themes/app_sizes.dart';
 import 'package:mobile_app/ui/core/themes/icons.dart';
+import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/core/ui/parameter_icon.dart';
-import 'package:mobile_app/ui/core/utils/parameter_extensions.dart';
 import 'package:mobile_app/ui/crop/view_models/finished_crop_details_viewmodel.dart';
 import 'package:provider/provider.dart';
 
@@ -59,18 +58,9 @@ class FinishedCropDetailsScreen extends StatelessWidget {
           }
 
           if (viewModel.crop == null || viewModel.measurementsByDate.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(AppIcons.cropsArchive,
-                      width: 64.0, height: 64.0),
-                  const SizedBox(height: 12),
-                  Text('No hay historial para mostrar',
-                      style: theme.textTheme.bodyLarge),
-                ],
-              ),
-            );
+            return EmptyState(
+                message: "No hay historial para mostrar",
+                iconAsset: AppIcons.mushroom);
           }
 
           final sortedDates = viewModel.measurementsByDate.keys.toList()

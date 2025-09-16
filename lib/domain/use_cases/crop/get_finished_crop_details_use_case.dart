@@ -1,3 +1,5 @@
+import 'package:mobile_app/config/api_constants.dart';
+import 'package:mobile_app/data/models/paged_result.dart';
 import 'package:mobile_app/domain/entities/control_action/control_action.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/entities/crop/crop_phase.dart';
@@ -36,16 +38,20 @@ class GetFinishedCropDetailsUseCase
         final phaseDetailFutures = crop.phases.map((phase) async {
           final measurementsResult =
               await _measurementRepository.getMeasurementsByPhaseId(phase.id);
-          final controlActionsResult = await _controlActionRepository
-              .getControlActionsByPhaseId(phase.id);
+          final controlActionsResult =
+              await _controlActionRepository.getControlActionsByPhaseId(
+            phase.id,
+            ApiConstants.defaultPage,
+            ApiConstants.defaultPageSize,
+          );
 
           List<Measurement> measurements =
               measurementsResult is Success<List<Measurement>>
                   ? measurementsResult.value
                   : [];
           List<ControlAction> controlActions =
-              controlActionsResult is Success<List<ControlAction>>
-                  ? controlActionsResult.value
+              controlActionsResult is Success<PagedResult<ControlAction>>
+                  ? controlActionsResult.value.content
                   : [];
 
           return PhaseDetails(

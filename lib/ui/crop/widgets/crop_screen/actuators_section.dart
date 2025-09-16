@@ -11,7 +11,7 @@ import 'package:mobile_app/ui/core/ui/empty_state.dart';
 import 'package:mobile_app/ui/core/utils/actuator_extensions.dart';
 import 'package:mobile_app/ui/crop/view_models/active_crop_viewmodel.dart';
 
-class ActuatorsSection extends StatelessWidget {
+class ActuatorsSection extends StatefulWidget {
   final ActiveCropViewModel viewModel;
   final ActiveCropSuccess state;
 
@@ -22,12 +22,39 @@ class ActuatorsSection extends StatelessWidget {
   });
 
   @override
+  State<ActuatorsSection> createState() => _ActuatorsSectionState();
+}
+
+class _ActuatorsSectionState extends State<ActuatorsSection> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      widget.viewModel.fetchMoreActionsForSelectedPhase();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (state.isPhaseDataLoading) {
+    if (widget.state.isPhaseDataLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (state.actionsForSelectedPhase.isEmpty) {
+    if (widget.state.actionsForSelectedPhase.isEmpty) {
       return const EmptyState(
         message: 'No hay acciones de control para mostrar en esta fase.',
         iconAsset: AppIcons.actuator,
@@ -35,12 +62,13 @@ class ActuatorsSection extends StatelessWidget {
     }
 
     return SingleChildScrollView(
+      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         children: [
-          _CurrentStatusSection(viewModel: viewModel),
+          _CurrentStatusSection(viewModel: widget.viewModel),
           const SizedBox(height: AppSizes.spacingExtraLarge),
-          _HistorySection(viewModel: viewModel),
+          _HistorySection(viewModel: widget.viewModel, state: widget.state),
         ],
       ),
     );
@@ -66,10 +94,10 @@ class _CurrentStatusSection extends StatelessWidget {
         const SizedBox(height: AppSizes.spacingExtraLarge),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: viewModel.latestActuatorStates.entries
+          children: viewModel.currentActuatorStates.entries
               .map((entry) => _ActuatorStatus(
                     actuator: entry.key,
-                    latestAction: entry.value,
+                    actionType: entry.value,
                   ))
               .toList(),
         ),
@@ -80,14 +108,13 @@ class _CurrentStatusSection extends StatelessWidget {
 
 class _ActuatorStatus extends StatelessWidget {
   final Actuator actuator;
-  final ControlAction? latestAction;
-  const _ActuatorStatus({required this.actuator, this.latestAction});
+  final ControlActionType? actionType;
+  const _ActuatorStatus({required this.actuator, this.actionType});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool isActive =
-        latestAction?.controlActionType == ControlActionType.activated;
+    final bool isActive = actionType == ControlActionType.activated;
     final statusText = isActive ? 'On' : 'Off';
     final statusColor = isActive
         ? theme.extension<AppAccentColors>()!.accent!
@@ -111,11 +138,14 @@ class _ActuatorStatus extends StatelessWidget {
 
 class _HistorySection extends StatelessWidget {
   final ActiveCropViewModel viewModel;
-  const _HistorySection({required this.viewModel});
+  final ActiveCropSuccess state;
+  const _HistorySection({required this.viewModel, required this.state});
 
   @override
   Widget build(BuildContext context) {
     final groupedActions = viewModel.actionsGroupedByDate;
+    final isFetchingMore = state.isFetchingMoreActions;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,6 +167,11 @@ class _HistorySection extends StatelessWidget {
             return _HistoryDateGroup(date: dateHeader, actions: actions);
           },
         ),
+        if (isFetchingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
       ],
     );
   }

@@ -90,7 +90,7 @@ Future<void> setupLocator() async {
   // Crop
   locator.registerLazySingleton(() => CreateCropUseCase(locator()));
   locator.registerLazySingleton(
-      () => GetCropDetailsUseCase(locator(), locator(), locator()));
+      () => GetCropDetailsUseCase(locator(), locator(), locator(), locator()));
   locator.registerLazySingleton(() => AdvanceCropPhaseUseCase(locator()));
   locator.registerLazySingleton(() => FinishCropUseCase(locator()));
   locator.registerLazySingleton(

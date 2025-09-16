@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/use_cases/crop/get_finished_crops_data_use_case.dart';
@@ -12,7 +13,11 @@ class FinishedCropsViewModel extends ChangeNotifier {
     required GetFinishedCropsDataUseCase getFinishedCropsDataUseCase,
   }) : _getFinishedCropsDataUseCase = getFinishedCropsDataUseCase {
     fetchAllData();
+    searchController.addListener(_onSearchChanged);
   }
+
+  static const Duration _debounceDuration = Duration(milliseconds: 300);
+  Timer? _debounce;
 
   List<Crop> _allFinishedCrops = [];
   bool _isLoading = true;
@@ -58,6 +63,13 @@ class FinishedCropsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _onSearchChanged() {
+    _debounce?.cancel();
+    _debounce = Timer(_debounceDuration, () {
+      setSearchQuery(searchController.text.trim());
+    });
+  }
+
   void setSearchQuery(String query) {
     if (_searchQuery != query) {
       _searchQuery = query;
@@ -67,6 +79,8 @@ class FinishedCropsViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.dispose();
   }
