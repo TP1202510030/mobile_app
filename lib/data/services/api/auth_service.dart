@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobile_app/config/api_routes.dart';
 import 'package:mobile_app/config/storage_constants.dart';
+import 'package:mobile_app/data/models/sign_in_request.dart';
 import 'package:mobile_app/data/services/api/api_client.dart';
 import 'package:mobile_app/domain/entities/iam/authenticated_user.dart';
 import 'package:mobile_app/core/exceptions/api_exception.dart';
@@ -16,11 +17,12 @@ class AuthService {
 
   Future<AuthenticatedUser> signIn(String username, String password) async {
     final url = ApiRoutes.signIn;
+    final request = SignInRequest(username: username, password: password);
 
     try {
       final response = await _apiClient.post(
         url,
-        data: {'username': username, 'password': password},
+        data: request.toJson(),
       );
 
       final user = AuthenticatedUser.fromJson(response.data);
