@@ -76,6 +76,9 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
   }
 
   void _initializeCache(List<PhaseDetails> details) {
+    _measurementsCache.clear();
+    _hasMoreMeasurements.clear();
+    _measurementsPage.clear();
     for (var detail in details) {
       final phaseId = detail.phase.id;
       _measurementsCache[phaseId] = detail.measurements;
@@ -105,22 +108,28 @@ class FinishedCropDetailViewModel extends ChangeNotifier {
     );
 
     if (result is Success<PagedResult<Measurement>>) {
-      final newMeasurements = result.value;
-      final existingMeasurements = _measurementsCache[phaseId]?.content ?? [];
-      final updatedContent = List<Measurement>.from(existingMeasurements)
-        ..addAll(newMeasurements.content);
+      final newPagedResult = result.value;
+      final existingPagedResult = _measurementsCache[phaseId];
 
-      _measurementsCache[phaseId] = PagedResult(
-        content: updatedContent,
-        totalPages: newMeasurements.totalPages,
-        totalElements: newMeasurements.totalElements,
-        size: newMeasurements.size,
-        number: newMeasurements.number,
-        isLast: newMeasurements.isLast,
-        isFirst: newMeasurements.isFirst,
-      );
+      if (existingPagedResult != null) {
+        final updatedContent =
+            List<Measurement>.from(existingPagedResult.content)
+              ..addAll(newPagedResult.content);
 
-      _hasMoreMeasurements[phaseId] = !newMeasurements.isLast;
+        _measurementsCache[phaseId] = PagedResult(
+          content: updatedContent,
+          totalPages: newPagedResult.totalPages,
+          totalElements: newPagedResult.totalElements,
+          size: newPagedResult.size,
+          number: newPagedResult.number,
+          isLast: newPagedResult.isLast,
+          isFirst: newPagedResult.isFirst,
+        );
+      } else {
+        _measurementsCache[phaseId] = newPagedResult;
+      }
+
+      _hasMoreMeasurements[phaseId] = !newPagedResult.isLast;
       _measurementsPage[phaseId] = nextPage;
     } else {
       log('Failed to fetch more measurements');

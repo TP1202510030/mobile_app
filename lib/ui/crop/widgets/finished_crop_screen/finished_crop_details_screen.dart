@@ -86,22 +86,25 @@ class _FinishedCropDetailsScreenState extends State<FinishedCropDetailsScreen> {
                 iconAsset: AppIcons.mushroom);
           }
 
-          return Column(
-            children: [
-              const SizedBox(height: AppSizes.spacingMedium),
-              Center(
-                child: Text('Producción total: ${widget.totalProduction} Tn',
-                    style: Theme.of(context).textTheme.bodySmall),
-              ),
-              _PhaseNavigator(viewModel: viewModel),
-              Expanded(
-                child: PhaseHistorySection(
-                  measurements: viewModel.measurementsForSelectedPhase,
-                  isFetchingMore: viewModel.isFetchingMore,
-                  scrollController: _scrollController,
+          return RefreshIndicator(
+            onRefresh: viewModel.fetchCropHistory,
+            child: Column(
+              children: [
+                const SizedBox(height: AppSizes.spacingMedium),
+                Center(
+                  child: Text('Producción total: ${widget.totalProduction} Tn',
+                      style: Theme.of(context).textTheme.bodySmall),
                 ),
-              ),
-            ],
+                _PhaseNavigator(viewModel: viewModel),
+                Expanded(
+                  child: PhaseHistorySection(
+                    measurements: viewModel.measurementsForSelectedPhase,
+                    isFetchingMore: viewModel.isFetchingMore,
+                    scrollController: _scrollController,
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),

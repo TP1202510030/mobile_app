@@ -42,6 +42,7 @@ class MeasurementService {
         queryParameters: {
           'page': page,
           'size': size,
+          'sort': 'timestamp,desc',
         },
       );
 
