@@ -26,13 +26,39 @@ class FinishedCropDetailsScreenWrapper extends StatelessWidget {
   }
 }
 
-class FinishedCropDetailsScreen extends StatelessWidget {
+class FinishedCropDetailsScreen extends StatefulWidget {
   final String totalProduction;
 
   const FinishedCropDetailsScreen({
     super.key,
     required this.totalProduction,
   });
+
+  @override
+  State<FinishedCropDetailsScreen> createState() =>
+      _FinishedCropDetailsScreenState();
+}
+
+class _FinishedCropDetailsScreenState extends State<FinishedCropDetailsScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    final viewModel = context.read<FinishedCropDetailViewModel>();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        viewModel.fetchMoreMeasurementsForSelectedPhase();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,14 +90,15 @@ class FinishedCropDetailsScreen extends StatelessWidget {
             children: [
               const SizedBox(height: AppSizes.spacingMedium),
               Center(
-                child: Text('Producción total: $totalProduction Tn',
+                child: Text('Producción total: ${widget.totalProduction} Tn',
                     style: Theme.of(context).textTheme.bodySmall),
               ),
               _PhaseNavigator(viewModel: viewModel),
               Expanded(
                 child: PhaseHistorySection(
-                  measurements: viewModel.selectedPhaseDetails!.measurements,
-                  // No se pasa scrollController para deshabilitar el scroll infinito
+                  measurements: viewModel.measurementsForSelectedPhase,
+                  isFetchingMore: viewModel.isFetchingMore,
+                  scrollController: _scrollController,
                 ),
               ),
             ],

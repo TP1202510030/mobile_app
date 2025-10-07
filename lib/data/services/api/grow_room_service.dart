@@ -18,7 +18,10 @@ class GrowRoomService {
       final response = await _apiClient.get(url);
       return GrowRoom.fromJson(response.data);
     } on DioException catch (e) {
-      throw e.error as ApiException;
+      if (e.error is ApiException) {
+        throw e.error!;
+      }
+      throw ApiException(message: "Failed to get grow room details.");
     }
   }
 
@@ -46,7 +49,10 @@ class GrowRoomService {
       return PagedResult.fromJson(
           response.data, (json) => GrowRoom.fromJson(json));
     } on DioException catch (e) {
-      throw e.error as ApiException;
+      if (e.error is ApiException) {
+        throw e.error!;
+      }
+      throw ApiException(message: "Failed to get grow rooms.");
     }
   }
 }

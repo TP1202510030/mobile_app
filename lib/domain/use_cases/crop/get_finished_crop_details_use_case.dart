@@ -4,9 +4,9 @@ import 'package:mobile_app/domain/entities/control_action/control_action.dart';
 import 'package:mobile_app/domain/entities/crop/crop.dart';
 import 'package:mobile_app/domain/entities/crop/crop_phase.dart';
 import 'package:mobile_app/domain/entities/measurement/measurement.dart';
-import 'package:mobile_app/domain/repositories/control_action_repository.dart';
 import 'package:mobile_app/domain/repositories/crop_repository.dart';
-import 'package:mobile_app/domain/repositories/measurement_repository.dart';
+import 'package:mobile_app/domain/use_cases/control_action/get_control_actions_by_phase_id_use_case.dart';
+import 'package:mobile_app/domain/use_cases/measurement/get_measurements_by_phase_id_use_case.dart';
 import 'package:mobile_app/domain/use_cases/use_case.dart';
 import 'package:mobile_app/utils/result.dart';
 
@@ -14,37 +14,14 @@ class GetFinishedCropDetailsUseCase
     implements
         UseCase<Result<FinishedCropDetails>, GetFinishedCropDetailsParams> {
   final CropRepository _cropRepository;
-  final MeasurementRepository _measurementRepository;
-  final ControlActionRepository _controlActionRepository;
+  final GetMeasurementsByPhaseIdUseCase _getMeasurementsUseCase;
+  final GetControlActionsByPhaseIdUseCase _getControlActionsUseCase;
 
   GetFinishedCropDetailsUseCase(
     this._cropRepository,
-    this._measurementRepository,
-    this._controlActionRepository,
+    this._getMeasurementsUseCase,
+    this._getControlActionsUseCase,
   );
-
-  Future<List<Measurement>> _fetchAllMeasurementsForPhase(int phaseId) async {
-    final allMeasurements = <Measurement>[];
-    int currentPage = 0;
-    bool isLastPage = false;
-
-    while (!isLastPage) {
-      final result = await _measurementRepository.getMeasurementsByPhaseId(
-        phaseId,
-        currentPage,
-        ApiConstants.defaultPageSize,
-      );
-
-      if (result is Success<PagedResult<Measurement>>) {
-        allMeasurements.addAll(result.value.content);
-        isLastPage = result.value.isLast;
-        currentPage++;
-      } else {
-        isLastPage = true;
-      }
-    }
-    return allMeasurements;
-  }
 
   @override
   Future<Result<FinishedCropDetails>> call(
@@ -59,19 +36,31 @@ class GetFinishedCropDetailsUseCase
         }
 
         final phaseDetailFutures = crop.phases.map((phase) async {
-          final measurements = await _fetchAllMeasurementsForPhase(phase.id);
-
-          final controlActionsResult =
-              await _controlActionRepository.getControlActionsByPhaseId(
-            phase.id,
-            ApiConstants.defaultPage,
-            ApiConstants.defaultPageSize,
+          final measurementsResult = await _getMeasurementsUseCase(
+            GetMeasurementsByPhaseIdParams(
+              cropPhaseId: phase.id,
+              page: ApiConstants.defaultPage,
+              size: ApiConstants.defaultPageSize,
+            ),
           );
 
-          List<ControlAction> controlActions =
+          final controlActionsResult = await _getControlActionsUseCase(
+            GetControlActionsByPhaseIdParams(
+              cropPhaseId: phase.id,
+              page: ApiConstants.defaultPage,
+              size: ApiConstants.defaultPageSize,
+            ),
+          );
+
+          final measurements =
+              measurementsResult is Success<PagedResult<Measurement>>
+                  ? measurementsResult.value
+                  : PagedResult<Measurement>.empty();
+
+          final controlActions =
               controlActionsResult is Success<PagedResult<ControlAction>>
-                  ? controlActionsResult.value.content
-                  : [];
+                  ? controlActionsResult.value
+                  : PagedResult<ControlAction>.empty();
 
           return PhaseDetails(
             phase: phase,
@@ -107,8 +96,8 @@ class FinishedCropDetails {
 
 class PhaseDetails {
   final CropPhase phase;
-  final List<Measurement> measurements;
-  final List<ControlAction> controlActions;
+  final PagedResult<Measurement> measurements;
+  final PagedResult<ControlAction> controlActions;
 
   const PhaseDetails({
     required this.phase,

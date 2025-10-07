@@ -141,6 +141,7 @@ Future<void> setupLocator() async {
     (cropId, _) => FinishedCropDetailViewModel(
       cropId: cropId,
       getFinishedCropDetailsUseCase: locator(),
+      getMeasurementsByPhaseIdUseCase: locator(),
     ),
   );
 }
