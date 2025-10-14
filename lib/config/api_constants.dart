@@ -5,7 +5,7 @@
 abstract final class ApiConstants {
   // Pagination
   static const int defaultPage = 0;
-  static const int defaultPageSize = 20;
+  static const int defaultPageSize = 25;
 
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 15);
